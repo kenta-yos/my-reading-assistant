@@ -239,6 +239,9 @@ export default async function GuidePage({
         >
           ＋ 新しいガイドを生成する
         </Link>
+        <p className="mt-4 text-xs text-stone-400 dark:text-stone-500">
+          AIが生成したコンテンツです。著者の所属・経歴などの事実情報は念のため原典でご確認ください。
+        </p>
       </div>
     </div>
   )

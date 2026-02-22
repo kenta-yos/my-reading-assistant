@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
 
 この4点を軸に、著者情報・思考の枠組み・知的系譜を加えたガイドを作ります。
 
-必ず以下の形式のJSONのみを返してください。コードブロック記法や追加テキストは含めないでください。
+必ず以下の形式のJSONのみを返してください。コードブロック記法・追加テキスト・引用マーカー（[1]など）は含めないでください。
 
 {
   "title": "コンテンツの正式名称",
@@ -193,6 +193,7 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
       systemInstruction: systemPrompt,
+      tools: [{ googleSearchRetrieval: {} }],
     })
     const aiResponse = await model.generateContent(userPrompt)
     responseText = aiResponse.response.text()
