@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
     ],
     "aboutAuthor": "著者の経歴・専門・主要著作（3〜4文）",
     "intellectualLineage": "著者の思考の枠組み、影響を受けた思想家・著作、この本が暗黙に対話している論者や学派（3〜5文）",
-    "difficultyLevel": "beginner または intermediate または advanced"
+    "difficultyLevel": "beginner（前提知識不要・一般向け） または intermediate（大学教養レベルの基礎知識が必要） または advanced（その分野の専門的な予備知識が必要）"
   }
 }
 
