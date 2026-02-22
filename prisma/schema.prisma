@@ -1,0 +1,33 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Guide {
+  id          String   @id @default(cuid())
+  title       String
+  inputType   String   // "URL" or "BOOK_TITLE"
+  inputValue  String
+  summary     String   @db.Text
+  prerequisites Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Gemini API 無料枠の使用量管理（日次）
+model ApiUsage {
+  id        String   @id @default(cuid())
+  date      String   @unique  // YYYY-MM-DD（JST）
+  count     Int      @default(0)
+  // quota/billing エラーが出たら true にして当日の全リクエストを遮断
+  blocked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

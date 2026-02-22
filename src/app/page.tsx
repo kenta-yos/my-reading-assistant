@@ -1,65 +1,126 @@
-import Image from "next/image";
+import Image from 'next/image'
+import Link from 'next/link'
+import { prisma } from '@/lib/prisma'
+import GuideForm from '@/components/GuideForm'
+import GuideCard from '@/components/GuideCard'
 
-export default function Home() {
+export const dynamic = 'force-dynamic'
+
+const DAILY_LIMIT = 400
+
+function getTodayJST(): string {
+  const jst = new Date(Date.now() + 9 * 60 * 60 * 1000)
+  return jst.toISOString().split('T')[0]
+}
+
+export default async function Home() {
+  const [recentGuides, todayUsage] = await Promise.all([
+    prisma.guide.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 6,
+      select: { id: true, title: true, inputType: true, inputValue: true, summary: true, createdAt: true },
+    }),
+    prisma.apiUsage.findUnique({ where: { date: getTodayJST() } }),
+  ])
+
+  const usedCount = todayUsage?.count ?? 0
+  const isBlocked = todayUsage?.blocked ?? false
+  const usagePercent = Math.min(100, Math.round((usedCount / DAILY_LIMIT) * 100))
+
+  const usageColor =
+    isBlocked ? 'bg-red-400'
+    : usagePercent >= 90 ? 'bg-red-400'
+    : usagePercent >= 70 ? 'bg-amber-400'
+    : 'bg-emerald-400'
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="space-y-8 sm:space-y-10">
+      {/* Hero */}
+      <section className="overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-800 p-7 sm:p-10">
+        <div className="flex items-center gap-5">
+          <Image
+            src="/luka.png"
+            alt="Luka"
+            width={72}
+            height={72}
+            className="flex-shrink-0 rounded-full shadow-lg ring-2 ring-white/25"
+            priority
+          />
+          <div>
+            <h1 className="text-xl font-bold leading-snug text-white sm:text-2xl">
+              きみの好奇心に、<br className="sm:hidden" />最高のブーストを
+            </h1>
+            <p className="mt-2 text-xs leading-relaxed text-indigo-200 sm:text-sm">
+              書名やURLを入れるだけで、ルカが前提知識をまとめてくれます
+            </p>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      {/* Form */}
+      <section>
+        <div className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm sm:p-6 dark:border-stone-700 dark:bg-stone-900">
+          <GuideForm />
+          <div className="mt-5 border-t border-stone-100 pt-4 dark:border-stone-800">
+            <div className="mb-1.5 flex items-center justify-between">
+              <span className="text-xs text-stone-500">
+                本日の使用量
+                {isBlocked && <span className="ml-2 text-red-500">⚠ 停止中</span>}
+              </span>
+              <span
+                className={`text-xs ${
+                  isBlocked || usagePercent >= 90
+                    ? 'text-red-500'
+                    : usagePercent >= 70
+                    ? 'text-amber-600'
+                    : 'text-stone-400'
+                }`}
+              >
+                {usedCount} / {DAILY_LIMIT}
+              </span>
+            </div>
+            <div className="h-1 w-full rounded-full bg-stone-100 dark:bg-stone-800">
+              <div
+                className={`h-1 rounded-full transition-all ${usageColor}`}
+                style={{ width: `${usagePercent}%` }}
+              />
+            </div>
+          </div>
         </div>
-      </main>
+      </section>
+
+      {/* Recent guides */}
+      {recentGuides.length > 0 && (
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">
+              最近のガイド
+            </h2>
+            <Link
+              href="/guides"
+              className="text-sm text-stone-500 transition hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200"
+            >
+              すべて見る →
+            </Link>
+          </div>
+
+          {/* Mobile: horizontal scroll */}
+          <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 sm:hidden">
+            {recentGuides.map((guide) => (
+              <div key={guide.id} className="w-[70vw] flex-shrink-0">
+                <GuideCard {...guide} compact />
+              </div>
+            ))}
+          </div>
+
+          {/* PC: grid */}
+          <div className="hidden gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-3">
+            {recentGuides.map((guide) => (
+              <GuideCard key={guide.id} {...guide} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
-  );
+  )
 }
