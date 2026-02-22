@@ -17,6 +17,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: '読書アシスタントLuka',
   description: '読む前に、Lukaに聞いてみて。本のタイトルかURLを入れるだけ。',
+  manifest: '/manifest.json',
+  icons: {
+    icon: '/icon.png',
+    apple: '/apple-icon.png',
+  },
 }
 
 export default function RootLayout({

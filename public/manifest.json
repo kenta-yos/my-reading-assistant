@@ -1,0 +1,16 @@
+{
+  "name": "読書アシスタントLuka",
+  "short_name": "Luka",
+  "description": "読む前に、Lukaに聞いてみて。本のタイトルかURLを入れるだけ。",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f6f2",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "/luka.png",
+      "sizes": "any",
+      "type": "image/png"
+    }
+  ]
+}
