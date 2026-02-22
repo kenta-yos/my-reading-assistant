@@ -193,7 +193,8 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
       systemInstruction: systemPrompt,
-      tools: [{ googleSearchRetrieval: {} }],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      tools: [{ googleSearch: {} } as any],
     })
     const aiResponse = await model.generateContent(userPrompt)
     responseText = aiResponse.response.text()
