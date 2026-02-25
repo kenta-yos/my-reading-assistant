@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import DeleteButton from './DeleteButton'
+import BookmarkButton from '@/components/BookmarkButton'
 
 type Prerequisites = {
   terminology: { term: string; definition: string }[]
@@ -42,10 +43,13 @@ export default async function GuidePage({
 
   const prereqs = guide.prerequisites as unknown as Prerequisites
   const difficulty = difficultyLabel[prereqs?.difficultyLevel ?? ''] ?? null
-  const date = new Date(guide.createdAt).toLocaleDateString('ja-JP', {
+  const date = new Date(guide.createdAt).toLocaleString('ja-JP', {
+    timeZone: 'Asia/Tokyo',
     year: 'numeric',
     month: 'long',
     day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   })
 
   return (
@@ -56,7 +60,7 @@ export default async function GuidePage({
         <div className="p-6 sm:p-8">
           <div className="mb-4 flex items-start justify-between gap-4">
             <div className="flex flex-wrap items-center gap-2 text-sm text-stone-500">
-              <span>{guide.inputType === 'URL' ? 'URL' : '書籍'}</span>
+              <span>{guide.inputType === 'URL' ? 'ウェブ記事' : '書籍'}</span>
               <span>·</span>
               <span>{date}</span>
               {difficulty && (
@@ -68,7 +72,10 @@ export default async function GuidePage({
                 </>
               )}
             </div>
-            <DeleteButton id={guide.id} />
+            <div className="flex items-center gap-2">
+              <BookmarkButton id={guide.id} bookmarked={guide.bookmarked} />
+              <DeleteButton id={guide.id} />
+            </div>
           </div>
 
           <h1 className="text-xl font-bold text-stone-950 dark:text-stone-50 sm:text-2xl">

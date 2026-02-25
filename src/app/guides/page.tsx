@@ -1,10 +1,13 @@
 import { prisma } from '@/lib/prisma'
+import { cleanupExpiredGuides } from '@/lib/cleanup'
 import GuideCard from '@/components/GuideCard'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
 export default async function GuidesPage() {
+  cleanupExpiredGuides().catch(() => {})
+
   const guides = await prisma.guide.findMany({
     orderBy: { createdAt: 'desc' },
     select: {
@@ -14,6 +17,7 @@ export default async function GuidesPage() {
       inputValue: true,
       summary: true,
       createdAt: true,
+      bookmarked: true,
     },
   })
 
