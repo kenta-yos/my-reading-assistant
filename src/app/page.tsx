@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
+import { cleanupExpiredGuides } from '@/lib/cleanup'
 import GuideForm from '@/components/GuideForm'
 import GuideCard from '@/components/GuideCard'
 
@@ -14,11 +15,22 @@ function getTodayJST(): string {
 }
 
 export default async function Home() {
+  // 期限切れガイドをクリーンアップ（失敗しても無視）
+  cleanupExpiredGuides().catch(() => {})
+
   const [recentGuides, todayUsage] = await Promise.all([
     prisma.guide.findMany({
       orderBy: { createdAt: 'desc' },
-      take: 6,
-      select: { id: true, title: true, inputType: true, inputValue: true, summary: true, createdAt: true },
+      take: 3,
+      select: {
+        id: true,
+        title: true,
+        inputType: true,
+        inputValue: true,
+        summary: true,
+        createdAt: true,
+        bookmarked: true,
+      },
     }),
     prisma.apiUsage.findUnique({ where: { date: getTodayJST() } }),
   ])
@@ -51,7 +63,7 @@ export default async function Home() {
               きみの好奇心に、<br className="sm:hidden" />最高のブーストを
             </h1>
             <p className="mt-2 text-xs leading-relaxed text-indigo-200 sm:text-sm">
-              書名やURLを入れるだけで、ルカが前提知識をまとめてくれます
+              本のタイトルや気になるネット記事のURLを入れるだけで、ルカが前提知識をまとめてくれます
             </p>
           </div>
         </div>
@@ -104,17 +116,7 @@ export default async function Home() {
             </Link>
           </div>
 
-          {/* Mobile: horizontal scroll */}
-          <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 sm:hidden">
-            {recentGuides.map((guide) => (
-              <div key={guide.id} className="w-[70vw] flex-shrink-0">
-                <GuideCard {...guide} compact />
-              </div>
-            ))}
-          </div>
-
-          {/* PC: grid */}
-          <div className="hidden gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex flex-col gap-3">
             {recentGuides.map((guide) => (
               <GuideCard key={guide.id} {...guide} />
             ))}

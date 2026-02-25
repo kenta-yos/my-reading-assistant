@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { prisma } from '@/lib/prisma'
+import { cleanupExpiredGuides } from '@/lib/cleanup'
 
 export const maxDuration = 60
 
@@ -237,6 +238,9 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
       { status: 500 }
     )
   }
+
+  // 期限切れガイドを非同期でクリーンアップ（失敗しても無視）
+  cleanupExpiredGuides().catch(() => {})
 
   const guide = await prisma.guide.create({
     data: {
