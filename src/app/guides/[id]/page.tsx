@@ -58,7 +58,7 @@ export default async function GuidePage({
       <header className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
         <div className="h-1 bg-indigo-600" />
         <div className="p-6 sm:p-8">
-          <div className="mb-4 flex items-start justify-between gap-4">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex flex-wrap items-center gap-2 text-sm text-stone-500">
               <span>{guide.inputType === 'URL' ? 'ウェブ記事' : '書籍'}</span>
               <span>·</span>
@@ -72,7 +72,7 @@ export default async function GuidePage({
                 </>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-shrink-0 items-center gap-2">
               <BookmarkButton id={guide.id} bookmarked={guide.bookmarked} />
               <DeleteButton id={guide.id} />
             </div>
