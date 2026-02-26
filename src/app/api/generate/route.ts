@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
     "aboutAuthor": "著者の経歴・専門・主要著作（3〜4文）",
     "intellectualLineage": "著者の思考の枠組み、影響を受けた思想家・著作、この本が暗黙に対話している論者や学派（3〜5文）",
     "recommendedResources": [
-      {"title": "入門書や関連資料のタイトル", "type": "本 / 記事 / 論文", "reason": "この本を読む前後に読むべき理由（1〜2文）"}
+      {"title": "入門書や関連資料のタイトル", "author": "著者名", "publisher": "出版社名", "year": "出版年（西暦4桁）", "price": "定価（税込表記、例: 1,100円）", "isbn": "ISBN-13（ハイフンなし13桁。書籍の場合のみ）", "type": "本 / 記事 / 論文", "reason": "この本を読む前後に読むべき理由（1〜2文）"}
     ]
   }
 }
@@ -182,6 +182,7 @@ difficultyLevel は1〜5の整数で返すこと：
 5 = 専門（大学院レベル・研究者向け）
 
 各項目の目安：terminology 10〜15項目、keyEvents 3〜6項目、highSchoolBasics 3〜6項目（科目をまたいでよい）、prerequisiteKnowledge 3〜5項目、recommendedResources 3〜5項目。
+recommendedResources の isbn は Google 検索で正確な ISBN-13 を調べて記載すること。price は定価（税込）を記載し、不明な場合は空文字にすること。
 keyEvents の significance は「ただ重要」ではなく、その出来事が何をどう変えたか・なぜこの本に関係するかを具体的に書く。
 highSchoolBasics の explanation は必ず「定義→仕組み・具体例→本書との接続」の流れで5〜7文。「重要です」「押さえておきましょう」という紹介文にしない。読者が概念を本当に理解できるレベルまで書く。
 経済学の本なら「需要と供給」「比較優位」、進化論の本なら「自然選択」「遺伝的浮動」、哲学書なら「形而上学」「演繹と帰納」のような教科書レベルの基礎を具体的に列挙すること。`
