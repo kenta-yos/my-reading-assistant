@@ -21,7 +21,7 @@ type Prerequisites = {
   highSchoolBasics: { subject: string; concept: string; explanation: string }[]
   aboutAuthor: string
   intellectualLineage: string
-  recommendedResources?: { title: string; author?: string; publisher?: string; year?: string; price?: string; isbn?: string; type: string; reason: string }[]
+
 }
 
 // 新5段階
@@ -348,56 +348,6 @@ export default async function GuidePage({
                 </div>
               </div>
             )}
-          </div>
-        </Section>
-      )}
-
-      {/* Section 05 — 入門書・関連資料 */}
-      {prereqs?.recommendedResources && prereqs.recommendedResources.length > 0 && (
-        <Section number="05" title="入門書・関連資料" accent="cyan">
-          <p className="text-xs text-stone-400 dark:text-stone-500">
-            ※ AIが推薦した書籍です。タイトル・著者等の正確性は版元ドットコム等でご確認ください。
-          </p>
-          <div className="space-y-3">
-            {prereqs.recommendedResources.map((item, i) => {
-              const meta = [item.publisher, item.year, item.price].filter(Boolean).join(' · ')
-              return (
-                <div
-                  key={i}
-                  className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900"
-                >
-                  <div className="h-0.5 bg-cyan-400" />
-                  <div className="p-5">
-                    <div className="mb-2 flex flex-wrap items-center gap-2">
-                      <span className="font-semibold text-stone-950 dark:text-stone-100">{item.title}</span>
-                      <span className="rounded-md bg-cyan-100 px-2 py-0.5 text-xs font-semibold text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300">
-                        {item.type}
-                      </span>
-                    </div>
-                    {item.author && (
-                      <p className="text-sm text-stone-600 dark:text-stone-400">{item.author}</p>
-                    )}
-                    {meta && (
-                      <p className="text-xs text-stone-500 dark:text-stone-500">{meta}</p>
-                    )}
-                    <p className="mt-2 text-sm leading-relaxed text-stone-700 dark:text-stone-300">
-                      {item.reason}
-                    </p>
-                    {item.isbn && (
-                      <a
-                        href={`https://www.hanmoto.com/bd/isbn/${item.isbn}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-cyan-700 hover:text-cyan-800 dark:text-cyan-400 dark:hover:text-cyan-300"
-                      >
-                        版元ドットコムで見る
-                        <span aria-hidden="true">&rarr;</span>
-                      </a>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
           </div>
         </Section>
       )}
