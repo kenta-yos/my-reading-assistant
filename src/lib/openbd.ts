@@ -42,25 +42,54 @@ interface OpenBDItem {
  */
 /**
  * タイトルを正規化して比較用の文字列にする。
- * 括弧・スペース・記号を除去し、小文字化する。
+ * 括弧・スペース・記号を除去し、全角英数→半角に変換して小文字化する。
  */
 function normalizeTitle(title: string): string {
   return title
-    .replace(/[\s　]+/g, '')        // 全角・半角スペース除去
-    .replace(/[（()）\[\]【】「」『』〈〉《》]/g, '') // 括弧類除去
-    .replace(/[：:・、。,.―─\-–—]/g, '')  // 区切り記号除去
+    .replace(/[\s　]+/g, '')
+    .replace(/[（()）\[\]【】「」『』〈〉《》]/g, '')
+    .replace(/[：:・、。,.―─\-–—~〜]/g, '')
+    // 全角英数 → 半角
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, (ch) =>
+      String.fromCharCode(ch.charCodeAt(0) - 0xFEE0)
+    )
     .toLowerCase()
+}
+
+/** 文字列からバイグラム（2文字組）の Set を返す */
+function bigrams(s: string): Set<string> {
+  const set = new Set<string>()
+  for (let i = 0; i < s.length - 1; i++) {
+    set.add(s.slice(i, i + 2))
+  }
+  return set
 }
 
 /**
  * AI が生成したタイトルと OpenBD のタイトルが同じ書籍を指しているか判定する。
- * どちらかが他方を含んでいれば一致とみなす。
+ *
+ * 1. どちらかが他方を含んでいれば即一致（サブタイトル付きケース）
+ * 2. バイグラム Dice 係数 >= 0.3 なら一致（表記ゆれ・助詞の有無に対応）
  */
 export function titleMatches(aiTitle: string, openbdTitle: string): boolean {
   const a = normalizeTitle(aiTitle)
   const b = normalizeTitle(openbdTitle)
   if (!a || !b) return false
-  return a.includes(b) || b.includes(a)
+
+  // 部分一致チェック（サブタイトル付き等）
+  if (a.includes(b) || b.includes(a)) return true
+
+  // バイグラム Dice 係数
+  const biA = bigrams(a)
+  const biB = bigrams(b)
+  if (biA.size === 0 || biB.size === 0) return false
+
+  let intersection = 0
+  for (const bg of biA) {
+    if (biB.has(bg)) intersection++
+  }
+  const dice = (2 * intersection) / (biA.size + biB.size)
+  return dice >= 0.3
 }
 
 export async function verifyISBNs(isbns: string[]): Promise<Map<string, VerifiedBook>> {
