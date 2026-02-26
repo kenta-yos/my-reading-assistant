@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { prisma } from '@/lib/prisma'
 import { cleanupExpiredGuides } from '@/lib/cleanup'
-import { verifyISBNs } from '@/lib/openbd'
+import { verifyISBNs, titleMatches } from '@/lib/openbd'
 
 export const maxDuration = 60
 
@@ -279,6 +279,9 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
             if (!isbnRegex.test(isbn)) return true // ISBN なし（記事・論文）→ 残す
             const book = verified.get(isbn)
             if (!book) return false // OpenBD にない → 除外
+            // AI のタイトルと OpenBD のタイトルが一致しない → ISBN が別の本 → 除外
+            const aiTitle = String(r.title ?? '')
+            if (!titleMatches(aiTitle, book.title)) return false
             // メタデータを上書き
             r.title = book.title
             r.author = book.author

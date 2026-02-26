@@ -40,6 +40,29 @@ interface OpenBDItem {
  * 存在しない ISBN は Map に含まれない。
  * タイムアウトや通信エラー時は空 Map を返す（グレースフルデグレード）。
  */
+/**
+ * タイトルを正規化して比較用の文字列にする。
+ * 括弧・スペース・記号を除去し、小文字化する。
+ */
+function normalizeTitle(title: string): string {
+  return title
+    .replace(/[\s　]+/g, '')        // 全角・半角スペース除去
+    .replace(/[（()）\[\]【】「」『』〈〉《》]/g, '') // 括弧類除去
+    .replace(/[：:・、。,.―─\-–—]/g, '')  // 区切り記号除去
+    .toLowerCase()
+}
+
+/**
+ * AI が生成したタイトルと OpenBD のタイトルが同じ書籍を指しているか判定する。
+ * どちらかが他方を含んでいれば一致とみなす。
+ */
+export function titleMatches(aiTitle: string, openbdTitle: string): boolean {
+  const a = normalizeTitle(aiTitle)
+  const b = normalizeTitle(openbdTitle)
+  if (!a || !b) return false
+  return a.includes(b) || b.includes(a)
+}
+
 export async function verifyISBNs(isbns: string[]): Promise<Map<string, VerifiedBook>> {
   const result = new Map<string, VerifiedBook>()
 
