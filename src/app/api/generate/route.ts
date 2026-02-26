@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { prisma } from '@/lib/prisma'
 import { cleanupExpiredGuides } from '@/lib/cleanup'
-import { verifyISBNs, titleMatches } from '@/lib/openbd'
+
 
 export const maxDuration = 60
 
@@ -168,10 +168,7 @@ export async function POST(request: NextRequest) {
       {"subject": "科目名（例：世界史・生物・経済・物理・倫理）", "concept": "概念・単元名", "explanation": "この概念の定義を1文で述べてから、仕組みやメカニズムを具体例を交えて3〜4文で説明し、最後にこの本のどのテーマと具体的に結びつくかを1〜2文で補足する。合計5〜7文。単なる紹介文にせず、読者が概念を本当に理解できるレベルまで踏み込む"}
     ],
     "aboutAuthor": "著者の経歴・専門・主要著作（3〜4文）",
-    "intellectualLineage": "著者の思考の枠組み、影響を受けた思想家・著作、この本が暗黙に対話している論者や学派（3〜5文）",
-    "recommendedResources": [
-      {"title": "入門書や関連資料のタイトル", "author": "著者名（サーバー側で正確なデータに上書きされる）", "publisher": "出版社名（サーバー側で上書きされる）", "year": "出版年（サーバー側で上書きされる）", "price": "（空文字でよい。サーバー側で自動補完される）", "isbn": "ISBN-13（ハイフンなし13桁。書籍の場合は必須。これを元に実在確認を行うため正確な値が最重要）", "type": "本 / 記事 / 論文", "reason": "この本を読む前後に読むべき理由（1〜2文）"}
-    ]
+    "intellectualLineage": "著者の思考の枠組み、影響を受けた思想家・著作、この本が暗黙に対話している論者や学派（3〜5文）"
   }
 }
 
@@ -182,11 +179,7 @@ difficultyLevel は1〜5の整数で返すこと：
 4 = 上級（その分野の専門的な予備知識が必要）
 5 = 専門（大学院レベル・研究者向け）
 
-各項目の目安：terminology 10〜15項目、keyEvents 3〜6項目、highSchoolBasics 3〜6項目（科目をまたいでよい）、prerequisiteKnowledge 3〜5項目、recommendedResources 3〜5項目。
-【最重要】recommendedResources の isbn は正確な ISBN-13（ハイフンなし13桁）を記載すること。サーバー側で OpenBD API により実在確認を行い、存在しない ISBN の書籍は自動的に除外される。
-isbn が不正確だと実在する書籍でも除外されるため、必ず Google 検索で正確な ISBN-13 を確認してから記載する。
-title・author・publisher・year・price はサーバー側で OpenBD の正確なデータに上書きされるため、厳密でなくてよい（isbn さえ正確なら自動修正される）。
-検索で ISBN を確認できなかった書籍は含めない（数が減っても構わない）。
+各項目の目安：terminology 10〜15項目、keyEvents 3〜6項目、highSchoolBasics 3〜6項目（科目をまたいでよい）、prerequisiteKnowledge 3〜5項目。
 keyEvents の significance は「ただ重要」ではなく、その出来事が何をどう変えたか・なぜこの本に関係するかを具体的に書く。
 highSchoolBasics の explanation は必ず「定義→仕組み・具体例→本書との接続」の流れで5〜7文。「重要です」「押さえておきましょう」という紹介文にしない。読者が概念を本当に理解できるレベルまで書く。
 経済学の本なら「需要と供給」「比較優位」、進化論の本なら「自然選択」「遺伝的浮動」、哲学書なら「形而上学」「演繹と帰納」のような教科書レベルの基礎を具体的に列挙すること。`
@@ -257,44 +250,6 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
       { status: 500 }
     )
   }
-
-  // ── OpenBD による推薦書籍の実在検証 ─────────────────────
-  const prereqs = guideData.prerequisites as Record<string, unknown> | undefined
-  const resources = prereqs?.recommendedResources
-  if (Array.isArray(resources) && resources.length > 0) {
-    // ISBN-13（13桁数字）を持つリソースを抽出
-    const isbnRegex = /^\d{13}$/
-    const isbnList = resources
-      .map((r: Record<string, unknown>) => String(r.isbn ?? ''))
-      .filter((isbn: string) => isbnRegex.test(isbn))
-
-    if (isbnList.length > 0) {
-      const verified = await verifyISBNs(isbnList)
-
-      // verified が空でない場合のみフィルタ（空＝API障害→AI データをそのまま使う）
-      if (verified.size > 0) {
-        prereqs!.recommendedResources = resources.filter(
-          (r: Record<string, unknown>) => {
-            const isbn = String(r.isbn ?? '')
-            if (!isbnRegex.test(isbn)) return true // ISBN なし（記事・論文）→ 残す
-            const book = verified.get(isbn)
-            if (!book) return false // OpenBD にない → 除外
-            // AI のタイトルと OpenBD のタイトルが一致しない → ISBN が別の本 → 除外
-            const aiTitle = String(r.title ?? '')
-            if (!titleMatches(aiTitle, book.title)) return false
-            // メタデータを上書き
-            r.title = book.title
-            r.author = book.author
-            r.publisher = book.publisher
-            r.year = book.year
-            if (book.price) r.price = book.price
-            return true
-          }
-        )
-      }
-    }
-  }
-  // ──────────────────────────────────────────────────────
 
   // 期限切れガイドを非同期でクリーンアップ（失敗しても無視）
   cleanupExpiredGuides().catch(() => {})
