@@ -355,6 +355,9 @@ export default async function GuidePage({
       {/* Section 05 — 入門書・関連資料 */}
       {prereqs?.recommendedResources && prereqs.recommendedResources.length > 0 && (
         <Section number="05" title="入門書・関連資料" accent="cyan">
+          <p className="text-xs text-stone-400 dark:text-stone-500">
+            ※ AIが推薦した書籍です。タイトル・著者等の正確性は版元ドットコム等でご確認ください。
+          </p>
           <div className="space-y-3">
             {prereqs.recommendedResources.map((item, i) => {
               const meta = [item.publisher, item.year, item.price].filter(Boolean).join(' · ')
