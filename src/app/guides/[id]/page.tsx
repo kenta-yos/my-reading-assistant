@@ -5,31 +5,45 @@ import DeleteButton from './DeleteButton'
 import BookmarkButton from '@/components/BookmarkButton'
 
 type Prerequisites = {
+  // 判断フェーズ
+  problemFocus?: string
+  postReadingOutcome?: string
+  difficultyLevel: number | 'beginner' | 'intermediate' | 'advanced'
+  difficultyExplanation?: string
+  prerequisiteKnowledge?: string[]
+  // 準備フェーズ
   terminology: { term: string; definition: string }[]
   domainContext: {
     overview: string
     keyEvents: { event: string; significance: string }[]
-    problemAwareness: string
+    problemAwareness?: string
   }
   highSchoolBasics: { subject: string; concept: string; explanation: string }[]
   aboutAuthor: string
   intellectualLineage: string
-  difficultyLevel: 'beginner' | 'intermediate' | 'advanced'
+  recommendedResources?: { title: string; type: string; reason: string }[]
 }
 
-const difficultyLabel: Record<string, { label: string; className: string }> = {
-  beginner: {
-    label: '入門',
-    className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
-  },
-  intermediate: {
-    label: '中級',
-    className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
-  },
-  advanced: {
-    label: '上級',
-    className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
-  },
+// 新5段階
+const numericDifficultyLabel: Record<number, { label: string; className: string }> = {
+  1: { label: '入門', className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' },
+  2: { label: '初級', className: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300' },
+  3: { label: '中級', className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' },
+  4: { label: '上級', className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' },
+  5: { label: '専門', className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
+}
+
+// 旧3段階フォールバック
+const legacyDifficultyLabel: Record<string, { label: string; className: string }> = {
+  beginner: { label: '入門', className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' },
+  intermediate: { label: '中級', className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' },
+  advanced: { label: '上級', className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
+}
+
+function getDifficulty(level: number | string | undefined): { label: string; className: string } | null {
+  if (level == null) return null
+  if (typeof level === 'number') return numericDifficultyLabel[level] ?? null
+  return legacyDifficultyLabel[level] ?? null
 }
 
 export default async function GuidePage({
@@ -42,7 +56,7 @@ export default async function GuidePage({
   if (!guide) notFound()
 
   const prereqs = guide.prerequisites as unknown as Prerequisites
-  const difficulty = difficultyLabel[prereqs?.difficultyLevel ?? ''] ?? null
+  const difficulty = getDifficulty(prereqs?.difficultyLevel)
   const date = new Date(guide.createdAt).toLocaleString('ja-JP', {
     timeZone: 'Asia/Tokyo',
     year: 'numeric',
@@ -51,6 +65,12 @@ export default async function GuidePage({
     hour: '2-digit',
     minute: '2-digit',
   })
+
+  const hasJudgmentPhase =
+    prereqs?.problemFocus ||
+    prereqs?.postReadingOutcome ||
+    prereqs?.difficultyExplanation ||
+    prereqs?.prerequisiteKnowledge?.length
 
   return (
     <div className="space-y-8 sm:space-y-10">
@@ -95,6 +115,99 @@ export default async function GuidePage({
           )}
         </div>
       </header>
+
+      {/* ━━ 判断フェーズ ━━ */}
+      {hasJudgmentPhase && (
+        <>
+          <PhaseHeader title="判断フェーズ" subtitle="この本を読むべきかを見極める" />
+
+          {/* 問題関心 */}
+          {prereqs.problemFocus && (
+            <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
+              <div className="h-0.5 bg-violet-400" />
+              <div className="p-5">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-violet-500 dark:text-violet-400">
+                  問題関心
+                </p>
+                <p className="leading-relaxed text-stone-900 dark:text-stone-100">
+                  {prereqs.problemFocus}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* 読後の変化 */}
+          {prereqs.postReadingOutcome && (
+            <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
+              <div className="h-0.5 bg-violet-400" />
+              <div className="p-5">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-violet-500 dark:text-violet-400">
+                  読後の変化
+                </p>
+                <p className="leading-relaxed text-stone-900 dark:text-stone-100">
+                  {prereqs.postReadingOutcome}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* 難易度・前提知識 */}
+          {(difficulty || prereqs.difficultyExplanation || prereqs.prerequisiteKnowledge?.length) && (
+            <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
+              <div className="h-0.5 bg-violet-400" />
+              <div className="p-5 space-y-4">
+                <p className="text-xs font-semibold uppercase tracking-widest text-violet-500 dark:text-violet-400">
+                  難易度・前提知識
+                </p>
+                {difficulty && (
+                  <div className="flex items-center gap-3">
+                    <span className={`rounded-full px-3 py-1 text-sm font-semibold ${difficulty.className}`}>
+                      {difficulty.label}
+                    </span>
+                    {typeof prereqs.difficultyLevel === 'number' && (
+                      <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <div
+                            key={n}
+                            className={`h-2 w-5 rounded-full ${
+                              n <= Number(prereqs.difficultyLevel)
+                                ? 'bg-violet-400'
+                                : 'bg-stone-200 dark:bg-stone-700'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {prereqs.difficultyExplanation && (
+                  <p className="text-sm leading-relaxed text-stone-700 dark:text-stone-300">
+                    {prereqs.difficultyExplanation}
+                  </p>
+                )}
+                {prereqs.prerequisiteKnowledge && prereqs.prerequisiteKnowledge.length > 0 && (
+                  <div>
+                    <p className="mb-2 text-xs font-semibold text-stone-500 dark:text-stone-400">
+                      必要な前提知識
+                    </p>
+                    <ul className="space-y-1.5">
+                      {prereqs.prerequisiteKnowledge.map((item, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm text-stone-700 dark:text-stone-300">
+                          <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-violet-400" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ━━ 準備フェーズ ━━ */}
+      <PhaseHeader title="準備フェーズ" subtitle="読むための土台をつくる" />
 
       {/* Section 01 — 専門用語 */}
       {prereqs?.terminology?.length > 0 && (
@@ -162,6 +275,7 @@ export default async function GuidePage({
               </div>
             )}
 
+            {/* 旧データ互換: problemAwareness */}
             {prereqs.domainContext.problemAwareness && (
               <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
                 <div className="h-0.5 bg-teal-400" />
@@ -238,6 +352,33 @@ export default async function GuidePage({
         </Section>
       )}
 
+      {/* Section 05 — 入門書・関連資料 */}
+      {prereqs?.recommendedResources && prereqs.recommendedResources.length > 0 && (
+        <Section number="05" title="入門書・関連資料" accent="cyan">
+          <div className="space-y-3">
+            {prereqs.recommendedResources.map((item, i) => (
+              <div
+                key={i}
+                className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900"
+              >
+                <div className="h-0.5 bg-cyan-400" />
+                <div className="p-5">
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <span className="font-semibold text-stone-950 dark:text-stone-100">{item.title}</span>
+                    <span className="rounded-md bg-cyan-100 px-2 py-0.5 text-xs font-semibold text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300">
+                      {item.type}
+                    </span>
+                  </div>
+                  <p className="text-sm leading-relaxed text-stone-700 dark:text-stone-300">
+                    {item.reason}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
       {/* Bottom CTA */}
       <div className="border-t border-stone-100 pb-4 pt-8 text-center dark:border-stone-800">
         <Link
@@ -254,13 +395,27 @@ export default async function GuidePage({
   )
 }
 
-type AccentColor = 'indigo' | 'teal' | 'amber' | 'rose'
+type AccentColor = 'indigo' | 'teal' | 'amber' | 'rose' | 'cyan'
 
 const badgeStyle: Record<AccentColor, string> = {
   indigo: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
   teal:   'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300',
   amber:  'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
   rose:   'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300',
+  cyan:   'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300',
+}
+
+function PhaseHeader({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <div className="flex items-center gap-3 pt-2">
+      <div className="h-px flex-1 bg-stone-200 dark:bg-stone-700" />
+      <div className="text-center">
+        <p className="text-sm font-bold text-stone-700 dark:text-stone-300">{title}</p>
+        <p className="text-xs text-stone-400 dark:text-stone-500">{subtitle}</p>
+      </div>
+      <div className="h-px flex-1 bg-stone-200 dark:bg-stone-700" />
+    </div>
+  )
 }
 
 function Section({
