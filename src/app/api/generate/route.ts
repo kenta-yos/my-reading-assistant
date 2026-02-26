@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { prisma } from '@/lib/prisma'
 import { cleanupExpiredGuides } from '@/lib/cleanup'
+import { searchRelatedBooks } from '@/lib/ndl'
 
 
 export const maxDuration = 60
@@ -168,7 +169,10 @@ export async function POST(request: NextRequest) {
       {"subject": "科目名（例：世界史・生物・経済・物理・倫理）", "concept": "概念・単元名", "explanation": "この概念の定義を1文で述べてから、仕組みやメカニズムを具体例を交えて3〜4文で説明し、最後にこの本のどのテーマと具体的に結びつくかを1〜2文で補足する。合計5〜7文。単なる紹介文にせず、読者が概念を本当に理解できるレベルまで踏み込む"}
     ],
     "aboutAuthor": "著者の経歴・専門・主要著作（3〜4文）",
-    "intellectualLineage": "著者の思考の枠組み、影響を受けた思想家・著作、この本が暗黙に対話している論者や学派（3〜5文）"
+    "intellectualLineage": "著者の思考の枠組み、影響を受けた思想家・著作、この本が暗黙に対話している論者や学派（3〜5文）",
+    "relatedBookQueries": [
+      {"query": "NDL蔵書検索用キーワード", "reason": "この本を読む前後に参照すべき理由"}
+    ]
   }
 }
 
@@ -178,6 +182,8 @@ difficultyLevel は1〜5の整数で返すこと：
 3 = 中級（大学教養レベルの基礎知識が必要）
 4 = 上級（その分野の専門的な予備知識が必要）
 5 = 専門（大学院レベル・研究者向け）
+
+relatedBookQueries は3〜5項目。書籍タイトルを生成するな。NDL（国立国会図書館）で検索するためのキーワードを出力せよ。キーワードは本のジャンル・テーマ・著者名など、具体的な書名ではなくトピックにすること。
 
 各項目の目安：terminology 10〜15項目、keyEvents 3〜6項目、highSchoolBasics 3〜6項目（科目をまたいでよい）、prerequisiteKnowledge 3〜5項目。
 keyEvents の significance は「ただ重要」ではなく、その出来事が何をどう変えたか・なぜこの本に関係するかを具体的に書く。
@@ -250,6 +256,22 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
       { status: 500 }
     )
   }
+
+  // ── NDL 検索で実在書籍を取得 ──────────────────────────
+  const prereqs = guideData.prerequisites as Record<string, unknown> | undefined
+  if (prereqs?.relatedBookQueries) {
+    try {
+      const queries = prereqs.relatedBookQueries as { query: string; reason: string }[]
+      const recommendedResources = await searchRelatedBooks(queries)
+      if (recommendedResources.length > 0) {
+        prereqs.recommendedResources = recommendedResources
+      }
+    } catch {
+      // グレースフルデグレード: NDL 検索失敗時はスキップ
+    }
+    delete prereqs.relatedBookQueries
+  }
+  // ──────────────────────────────────────────────────────
 
   // 期限切れガイドを非同期でクリーンアップ（失敗しても無視）
   cleanupExpiredGuides().catch(() => {})

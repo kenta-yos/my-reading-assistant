@@ -21,7 +21,14 @@ type Prerequisites = {
   highSchoolBasics: { subject: string; concept: string; explanation: string }[]
   aboutAuthor: string
   intellectualLineage: string
-
+  recommendedResources?: {
+    title: string
+    author: string
+    publisher: string
+    year: string
+    isbn: string
+    reason: string
+  }[]
 }
 
 // 新5段階
@@ -348,6 +355,50 @@ export default async function GuidePage({
                 </div>
               </div>
             )}
+          </div>
+        </Section>
+      )}
+
+      {/* Section 05 — 関連書籍 */}
+      {prereqs?.recommendedResources && prereqs.recommendedResources.length > 0 && (
+        <Section number="05" title="関連書籍" accent="cyan">
+          <div className="space-y-3">
+            {prereqs.recommendedResources.map((book, i) => (
+              <div
+                key={i}
+                className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900"
+              >
+                <div className="h-0.5 bg-cyan-400" />
+                <div className="p-5">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-3">
+                    <p className="font-semibold text-stone-950 dark:text-stone-100">
+                      {book.isbn ? (
+                        <a
+                          href={`https://www.hanmoto.com/bd/isbn/${book.isbn}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline decoration-cyan-300 underline-offset-2 hover:decoration-cyan-500"
+                        >
+                          {book.title}
+                        </a>
+                      ) : (
+                        book.title
+                      )}
+                    </p>
+                  </div>
+                  <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+                    {[book.author, book.publisher, book.year ? `${book.year}年` : '']
+                      .filter(Boolean)
+                      .join(' / ')}
+                  </p>
+                  {book.reason && (
+                    <p className="mt-2 text-sm leading-relaxed text-stone-700 dark:text-stone-300">
+                      {book.reason}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </Section>
       )}
