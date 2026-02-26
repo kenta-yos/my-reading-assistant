@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { prisma } from '@/lib/prisma'
 import { cleanupExpiredGuides } from '@/lib/cleanup'
-import { searchRelatedBooks } from '@/lib/ndl'
+import { searchNdlByKeywords, NdlSearchQuery, NdlCandidate } from '@/lib/ndl'
 
 
 export const maxDuration = 60
@@ -61,6 +61,68 @@ function parseJsonResponse(text: string): object {
     }
     throw new Error('JSONの解析に失敗しました')
   }
+}
+
+async function selectRelevantBooks(
+  candidates: NdlCandidate[],
+  bookTitle: string,
+  genAI: GoogleGenerativeAI
+): Promise<{ title: string; author: string; publisher: string; year: string; isbn: string; reason: string }[]> {
+  const numbered = candidates.map((c, i) => ({
+    index: i,
+    title: c.title,
+    authors: c.authors.join('、'),
+    publisher: c.publisher,
+    year: c.year,
+    searchIntent: c.searchIntent,
+  }))
+
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-2.5-flash',
+    generationConfig: {
+      responseMimeType: 'application/json',
+      temperature: 0.2,
+    },
+  })
+
+  const prompt = `あなたは読書アドバイザーです。ユーザーが「${bookTitle}」を読もうとしています。
+以下はNDL（国立国会図書館）から取得した書籍候補リストです。
+
+${JSON.stringify(numbered, null, 2)}
+
+この中から、「${bookTitle}」を読む前後に参照すると有益な書籍を3〜5冊選んでください。
+選書基準：
+- 前提知識を補える入門書・教科書
+- 同じテーマを別の角度から扱っている本
+- 著者の他の重要著作
+- 知的系譜をたどれる古典・影響源
+
+以下のJSON配列のみを返してください：
+[{"index": 0, "reason": "選んだ理由を2〜3文で"}]
+
+注意：
+- index は上記リストの index をそのまま使うこと
+- reason は具体的に書くこと（「関連がある」だけでは不十分）
+- 明らかに無関係な本は選ばないこと`
+
+  const response = await model.generateContent(prompt)
+  const text = response.response.text()
+  const selections = JSON.parse(text) as { index: number; reason: string }[]
+
+  return selections
+    .filter(s => s.index >= 0 && s.index < candidates.length)
+    .slice(0, 5)
+    .map(s => {
+      const c = candidates[s.index]
+      return {
+        title: c.title,
+        author: c.authors.join('、'),
+        publisher: c.publisher,
+        year: c.year,
+        isbn: c.isbn,
+        reason: s.reason,
+      }
+    })
 }
 
 export async function POST(request: NextRequest) {
@@ -170,8 +232,8 @@ export async function POST(request: NextRequest) {
     ],
     "aboutAuthor": "著者の経歴・専門・主要著作（3〜4文）",
     "intellectualLineage": "著者の思考の枠組み、影響を受けた思想家・著作、この本が暗黙に対話している論者や学派（3〜5文）",
-    "relatedBookQueries": [
-      {"query": "NDL蔵書検索用キーワード", "reason": "この本を読む前後に参照すべき理由"}
+    "ndlSearchQueries": [
+      {"keywords": ["キーワード1", "キーワード2"], "intent": "この検索の意図"}
     ]
   }
 }
@@ -183,7 +245,7 @@ difficultyLevel は1〜5の整数で返すこと：
 4 = 上級（その分野の専門的な予備知識が必要）
 5 = 専門（大学院レベル・研究者向け）
 
-relatedBookQueries は3〜5項目。書籍タイトルを生成するな。NDL（国立国会図書館）で検索するためのキーワードを出力せよ。キーワードは本のジャンル・テーマ・著者名など、具体的な書名ではなくトピックにすること。
+ndlSearchQueries は3〜5項目。各項目の keywords は2〜3語の配列。具体的な書名を含めるな。分野名・テーマ・著者名・概念を組み合わせよ。intent にはその検索の意図を簡潔に書くこと。
 
 各項目の目安：terminology 10〜15項目、keyEvents 3〜6項目、highSchoolBasics 3〜6項目（科目をまたいでよい）、prerequisiteKnowledge 3〜5項目。
 keyEvents の significance は「ただ重要」ではなく、その出来事が何をどう変えたか・なぜこの本に関係するかを具体的に書く。
@@ -257,19 +319,37 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
     )
   }
 
-  // ── NDL 検索で実在書籍を取得 ──────────────────────────
+  // ── NDL 検索 → Gemini 選書で実在書籍を取得 ─────────────
   const prereqs = guideData.prerequisites as Record<string, unknown> | undefined
-  if (prereqs?.relatedBookQueries) {
+  if (prereqs?.ndlSearchQueries) {
     try {
-      const queries = prereqs.relatedBookQueries as { query: string; reason: string }[]
-      const recommendedResources = await searchRelatedBooks(queries)
-      if (recommendedResources.length > 0) {
-        prereqs.recommendedResources = recommendedResources
+      const queries = prereqs.ndlSearchQueries as NdlSearchQuery[]
+      const candidates = await searchNdlByKeywords(queries)
+      if (candidates.length > 0) {
+        try {
+          const recommendedResources = await selectRelevantBooks(
+            candidates,
+            guideData.title || inputValue,
+            genAI
+          )
+          if (recommendedResources.length > 0) {
+            prereqs.recommendedResources = recommendedResources
+          }
+        } catch (error) {
+          if (isQuotaError(error)) {
+            await prisma.apiUsage.upsert({
+              where: { date: today },
+              create: { date: today, count: 1, blocked: true },
+              update: { blocked: true },
+            })
+          }
+          // 選書失敗時はガイドを推薦なしで返す
+        }
       }
     } catch {
       // グレースフルデグレード: NDL 検索失敗時はスキップ
     }
-    delete prereqs.relatedBookQueries
+    delete prereqs.ndlSearchQueries
   }
   // ──────────────────────────────────────────────────────
 

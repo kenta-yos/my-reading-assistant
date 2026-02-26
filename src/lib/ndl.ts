@@ -83,32 +83,25 @@ export function parseRecords(sruXml: string): BookResult[] {
   return books
 }
 
-type RelatedBookQuery = {
-  query: string
-  reason: string
+export type NdlSearchQuery = { keywords: string[]; intent: string }
+
+export type NdlCandidate = BookResult & {
+  searchIntent: string
 }
 
-type RecommendedBook = {
-  title: string
-  author: string
-  publisher: string
-  year: string
-  isbn: string
-  reason: string
-}
-
-export async function searchRelatedBooks(
-  queries: RelatedBookQuery[]
-): Promise<RecommendedBook[]> {
+export async function searchNdlByKeywords(
+  queries: NdlSearchQuery[]
+): Promise<NdlCandidate[]> {
   if (!queries?.length) return []
 
   const results = await Promise.allSettled(
-    queries.map(async ({ query, reason }) => {
+    queries.map(async ({ keywords, intent }) => {
+      const cql = keywords.map(k => `keyword="${k}"`).join(' AND ')
       const url =
         `https://ndlsearch.ndl.go.jp/api/sru` +
         `?operation=searchRetrieve` +
-        `&query=title%3D${encodeURIComponent(`"${query}"`)}` +
-        `&maximumRecords=3` +
+        `&query=${encodeURIComponent(cql)}` +
+        `&maximumRecords=10` +
         `&recordSchema=dcndl`
 
       const res = await fetch(url, {
@@ -117,30 +110,27 @@ export async function searchRelatedBooks(
       const xml = await res.text()
       const books = parseRecords(xml)
 
-      if (books.length === 0) return null
-
-      const book = books[0]
-      return {
-        title: book.title,
-        author: book.authors.join('、'),
-        publisher: book.publisher,
-        year: book.year,
-        isbn: book.isbn,
-        reason,
-      }
+      return books.map(book => ({ ...book, searchIntent: intent }))
     })
   )
 
-  const books: RecommendedBook[] = []
+  const candidates: NdlCandidate[] = []
   const seenIsbns = new Set<string>()
+  const seenTitles = new Set<string>()
 
   for (const result of results) {
-    if (result.status !== 'fulfilled' || !result.value) continue
-    const book = result.value
-    if (book.isbn && seenIsbns.has(book.isbn)) continue
-    if (book.isbn) seenIsbns.add(book.isbn)
-    books.push(book)
+    if (result.status !== 'fulfilled') continue
+    for (const book of result.value) {
+      if (book.isbn) {
+        if (seenIsbns.has(book.isbn)) continue
+        seenIsbns.add(book.isbn)
+      } else {
+        if (seenTitles.has(book.title)) continue
+      }
+      seenTitles.add(book.title)
+      candidates.push(book)
+    }
   }
 
-  return books
+  return candidates
 }
