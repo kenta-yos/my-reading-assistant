@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import DeleteButton from './DeleteButton'
 import BookmarkButton from '@/components/BookmarkButton'
+import SectionNav from '@/components/SectionNav'
 
 type Prerequisites = {
   // 判断フェーズ
@@ -80,6 +81,15 @@ export default async function GuidePage({
     prereqs?.difficultyExplanation ||
     prereqs?.prerequisiteKnowledge?.length
 
+  const sections = [
+    hasJudgmentPhase && { id: 'judgment', label: '判断' },
+    prereqs?.terminology?.length > 0 && { id: 'terminology', label: '用語' },
+    prereqs?.domainContext && { id: 'context', label: 'コンテクスト' },
+    prereqs?.highSchoolBasics?.length > 0 && { id: 'basics', label: '基礎知識' },
+    (prereqs?.aboutAuthor || prereqs?.intellectualLineage) && { id: 'author', label: '著者' },
+    prereqs?.recommendedResources && prereqs.recommendedResources.length > 0 && { id: 'books', label: '関連書籍' },
+  ].filter(Boolean) as { id: string; label: string }[]
+
   return (
     <div className="space-y-8 sm:space-y-10">
       {/* Header card */}
@@ -124,9 +134,11 @@ export default async function GuidePage({
         </div>
       </header>
 
+      <SectionNav sections={sections} />
+
       {/* ━━ 判断フェーズ ━━ */}
       {hasJudgmentPhase && (
-        <>
+        <div id="judgment" className="scroll-mt-24 space-y-8 sm:space-y-10">
           <PhaseHeader title="判断フェーズ" subtitle="この本を読むべきかを見極める" />
 
           {/* 問題関心 */}
@@ -211,7 +223,7 @@ export default async function GuidePage({
               </div>
             </div>
           )}
-        </>
+        </div>
       )}
 
       {/* ━━ 準備フェーズ ━━ */}
@@ -219,7 +231,7 @@ export default async function GuidePage({
 
       {/* Section 01 — 専門用語 */}
       {prereqs?.terminology?.length > 0 && (
-        <Section number="01" title="この領域の専門用語" accent="indigo">
+        <Section id="terminology" number="01" title="この領域の専門用語" accent="indigo">
           <div className="grid gap-3 sm:grid-cols-2">
             {prereqs.terminology.map((item, i) => (
               <div
@@ -241,7 +253,7 @@ export default async function GuidePage({
 
       {/* Section 02 — 領域のコンテクスト */}
       {prereqs?.domainContext && (
-        <Section number="02" title="この領域のコンテクスト" accent="teal">
+        <Section id="context" number="02" title="この領域のコンテクスト" accent="teal">
           <div className="space-y-3">
             {prereqs.domainContext.overview && (
               <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
@@ -303,7 +315,7 @@ export default async function GuidePage({
 
       {/* Section 03 — 高校レベル基礎知識 */}
       {prereqs?.highSchoolBasics?.length > 0 && (
-        <Section number="03" title="高校レベルで押さえておきたい基礎知識" accent="amber">
+        <Section id="basics" number="03" title="高校レベルで押さえておきたい基礎知識" accent="amber">
           <div className="space-y-3">
             {prereqs.highSchoolBasics.map((item, i) => (
               <div
@@ -330,7 +342,7 @@ export default async function GuidePage({
 
       {/* Section 04 — 著者・知的系譜 */}
       {(prereqs?.aboutAuthor || prereqs?.intellectualLineage) && (
-        <Section number="04" title="著者と思想的背景" accent="rose">
+        <Section id="author" number="04" title="著者と思想的背景" accent="rose">
           <div className="space-y-3">
             {prereqs.aboutAuthor && (
               <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
@@ -362,7 +374,7 @@ export default async function GuidePage({
 
       {/* Section 05 — 関連書籍 */}
       {prereqs?.recommendedResources && prereqs.recommendedResources.length > 0 && (
-        <Section number="05" title="関連書籍" accent="cyan">
+        <Section id="books" number="05" title="関連書籍" accent="cyan">
           {(() => {
             const introBooks = prereqs.recommendedResources!.filter(b => b.category === '入門')
             const advancedBooks = prereqs.recommendedResources!.filter(b => b.category === '発展')
@@ -506,18 +518,20 @@ function PhaseHeader({ title, subtitle }: { title: string; subtitle: string }) {
 }
 
 function Section({
+  id,
   number,
   title,
   accent,
   children,
 }: {
+  id?: string
   number: string
   title: string
   accent: AccentColor
   children: React.ReactNode
 }) {
   return (
-    <section className="space-y-4">
+    <section id={id} className="scroll-mt-24 space-y-4">
       <div className="flex items-center gap-2.5">
         <span className={`rounded-md px-2 py-0.5 font-mono text-xs font-bold ${badgeStyle[accent]}`}>
           {number}
