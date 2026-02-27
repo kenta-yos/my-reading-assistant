@@ -5,7 +5,7 @@ import { cleanupExpiredGuides } from '@/lib/cleanup'
 import { searchNdlByKeywords, NdlSearchQuery, NdlCandidate } from '@/lib/ndl'
 
 
-export const maxDuration = 60
+export const maxDuration = 120
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
@@ -79,7 +79,7 @@ async function selectRelevantBooks(
   }))
 
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     generationConfig: {
       responseMimeType: 'application/json',
       temperature: 0.2,
@@ -95,7 +95,7 @@ ${summary}
 
 ${JSON.stringify(numbered, null, 2)}
 
-この中から「入門書」を最大2冊、「発展書」を最大2冊、合計最大4冊選んでください。
+この中から「入門書」を必ず2冊、「発展書」を必ず2冊、合計4冊選んでください。
 
 ■ カテゴリの定義
 - 入門（入門書）: 「${bookTitle}」を読む前に前提知識を補える教科書・入門書・新書。その分野の基礎を平易に解説しているもの。
@@ -113,9 +113,6 @@ ${JSON.stringify(numbered, null, 2)}
 ■ 絶対に選んではいけない本
 全集、辞典、事典、ハンドブック、年鑑、白書、統計集、雑誌、紀要、論文集、講座もの、シリーズ全巻セット。
 タイトルに「全集」「辞典」「事典」「ハンドブック」「年鑑」「白書」「講座」「紀要」「研究報告」が含まれる本は選ぶな。
-
-■ 選ばない勇気
-対象書籍のテーマと直接つながらない本は、候補にあっても選ぶな。4冊に満たなくてもよい。無関係な本を推薦するくらいなら少ない方がましである。
 
 以下のJSON配列のみを返してください：
 [{"index": 0, "reason": "選んだ理由を2〜3文で", "category": "入門"}]

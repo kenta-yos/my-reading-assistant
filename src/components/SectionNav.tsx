@@ -59,27 +59,29 @@ export default function SectionNav({ sections }: { sections: SectionItem[] }) {
   return (
     <div
       ref={navRef}
-      className={`sticky top-[49px] z-10 border-b border-stone-200/80 bg-white/95 backdrop-blur-sm transition-all duration-300 dark:border-stone-800/80 dark:bg-stone-950/95 ${
+      className={`fixed left-0 right-0 top-[49px] z-10 transition-all duration-300 ${
         visible
-          ? 'opacity-100'
-          : 'pointer-events-none max-h-0 overflow-hidden border-b-0 opacity-0'
+          ? 'translate-y-0 opacity-100'
+          : 'pointer-events-none -translate-y-full opacity-0'
       }`}
     >
-      <nav className="-mx-4 flex flex-wrap gap-1.5 px-4 py-2">
-        {sections.map((section) => (
-          <button
-            key={section.id}
-            onClick={() => handleClick(section.id)}
-            className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
-              activeId === section.id
-                ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                : 'text-stone-400 hover:text-stone-600 dark:hover:text-stone-300'
-            }`}
-          >
-            {section.label}
-          </button>
-        ))}
-      </nav>
+      <div className="border-b border-stone-200/80 bg-white/95 backdrop-blur-sm dark:border-stone-800/80 dark:bg-stone-950/95">
+        <nav className="mx-auto flex max-w-3xl flex-wrap gap-1.5 px-4 py-2">
+          {sections.map((section) => (
+            <button
+              key={section.id}
+              onClick={() => handleClick(section.id)}
+              className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
+                activeId === section.id
+                  ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
+                  : 'text-stone-400 hover:text-stone-600 dark:hover:text-stone-300'
+              }`}
+            >
+              {section.label}
+            </button>
+          ))}
+        </nav>
+      </div>
     </div>
   )
 }
