@@ -59,8 +59,10 @@ export default function SectionNav({ sections }: { sections: SectionItem[] }) {
   return (
     <div
       ref={navRef}
-      className={`sticky top-[49px] z-10 border-b border-stone-200/80 bg-white/95 backdrop-blur-sm transition-opacity duration-300 dark:border-stone-800/80 dark:bg-stone-950/95 ${
-        visible ? 'opacity-100' : 'pointer-events-none opacity-0'
+      className={`sticky top-[49px] z-10 border-b border-stone-200/80 bg-white/95 backdrop-blur-sm transition-all duration-300 dark:border-stone-800/80 dark:bg-stone-950/95 ${
+        visible
+          ? 'opacity-100'
+          : 'pointer-events-none max-h-0 overflow-hidden border-b-0 opacity-0'
       }`}
     >
       <nav className="-mx-4 flex flex-wrap gap-1.5 px-4 py-2">
