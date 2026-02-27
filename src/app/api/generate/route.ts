@@ -9,8 +9,8 @@ export const maxDuration = 60
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
-// 1日の上限（無料枠500/日の80%）
-const DAILY_LIMIT = 400
+// 1日の上限（無料枠250/日の80%）
+const DAILY_LIMIT = 200
 
 // JST（UTC+9）の今日の日付を返す
 function getTodayJST(): string {

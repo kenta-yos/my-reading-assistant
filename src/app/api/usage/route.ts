@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-const DAILY_LIMIT = 400
+const DAILY_LIMIT = 200
 
 function getTodayJST(): string {
   const jst = new Date(Date.now() + 9 * 60 * 60 * 1000)

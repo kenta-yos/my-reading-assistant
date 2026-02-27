@@ -7,7 +7,7 @@ import GuideCard from '@/components/GuideCard'
 
 export const dynamic = 'force-dynamic'
 
-const DAILY_LIMIT = 400
+const DAILY_LIMIT = 200
 
 function getTodayJST(): string {
   const jst = new Date(Date.now() + 9 * 60 * 60 * 1000)
