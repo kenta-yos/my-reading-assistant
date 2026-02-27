@@ -361,14 +361,7 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
           }
         } catch (error) {
           console.error('[selectRelevantBooks] failed:', error)
-          if (isQuotaError(error)) {
-            await prisma.apiUsage.upsert({
-              where: { date: today },
-              create: { date: today, count: 1, blocked: true },
-              update: { blocked: true },
-            })
-          }
-          // 選書失敗時はガイドを推薦なしで返す
+          // 選書失敗時はガイドを推薦なしで返す（blocked にはしない）
         }
       }
     } catch {
