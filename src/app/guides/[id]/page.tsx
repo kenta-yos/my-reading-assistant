@@ -506,11 +506,10 @@ function BookCard({ book, accent }: { book: Prerequisites['recommendedResources'
 
 function PhaseHeader({ step, title, subtitle }: { step: number; title: string; subtitle: string }) {
   return (
-    <div className="flex items-center gap-3 pt-2">
-      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/30">
-        <span className="text-xs font-bold leading-none text-violet-700 dark:text-violet-300">
-          STEP{'\n'}{step}
-        </span>
+    <div className="flex items-center gap-3">
+      <div className="flex h-10 w-10 flex-shrink-0 flex-col items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/30">
+        <span className="text-[10px] font-bold uppercase leading-none text-violet-700 dark:text-violet-300">Step</span>
+        <span className="text-sm font-bold leading-tight text-violet-700 dark:text-violet-300">{step}</span>
       </div>
       <div>
         <p className="text-base font-bold text-stone-700 dark:text-stone-300">{title}</p>
