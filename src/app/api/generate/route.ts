@@ -66,6 +66,7 @@ function parseJsonResponse(text: string): object {
 async function selectRelevantBooks(
   candidates: NdlCandidate[],
   bookTitle: string,
+  summary: string,
   genAI: GoogleGenerativeAI
 ): Promise<{ title: string; author: string; publisher: string; year: string; isbn: string; reason: string; category: '入門' | '発展' }[]> {
   const numbered = candidates.map((c, i) => ({
@@ -78,7 +79,7 @@ async function selectRelevantBooks(
   }))
 
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-2.0-flash',
     generationConfig: {
       responseMimeType: 'application/json',
       temperature: 0.2,
@@ -86,23 +87,35 @@ async function selectRelevantBooks(
   })
 
   const prompt = `あなたは読書アドバイザーです。ユーザーが「${bookTitle}」を読もうとしています。
-以下はNDL（国立国会図書館）から取得した書籍候補リストです。
+
+■ この本の概要
+${summary}
+
+以下はNDL（国立国会図書館）から取得した書籍候補リストです。各候補の searchIntent はその本が検索された意図です。
 
 ${JSON.stringify(numbered, null, 2)}
 
-この中から「入門書」を必ず2冊、「発展書」を必ず2冊、合計4冊選んでください。
+この中から「入門書」を最大2冊、「発展書」を最大2冊、合計最大4冊選んでください。
 
 ■ カテゴリの定義
 - 入門（入門書）: 「${bookTitle}」を読む前に前提知識を補える教科書・入門書・新書。その分野の基礎を平易に解説しているもの。
 - 発展（発展書）: 同じテーマをより深く扱う専門書、著者の他の重要著作、知的系譜をたどれる古典・影響源。「${bookTitle}」を読んだ後に進むべき本。
 
-■ 選書の優先基準
+■ 選書の最優先基準
+- 対象書籍「${bookTitle}」のテーマと直接関連する本を最優先せよ。
+- 分野全般の概論より、対象書籍が扱う具体的なテーマに即した本を選べ。
+- 各候補の searchIntent を参考にし、その意図に合ったカテゴリ（入門 or 発展）に分類せよ。
+
+■ その他の優先基準
 - 同程度の候補なら出版年が新しい方を優先せよ。ただし分野の古典的名著は例外として許容する。
 - 単著を優先せよ。
 
 ■ 絶対に選んではいけない本
 全集、辞典、事典、ハンドブック、年鑑、白書、統計集、雑誌、紀要、論文集、講座もの、シリーズ全巻セット。
 タイトルに「全集」「辞典」「事典」「ハンドブック」「年鑑」「白書」「講座」「紀要」「研究報告」が含まれる本は選ぶな。
+
+■ 選ばない勇気
+対象書籍のテーマと直接つながらない本は、候補にあっても選ぶな。4冊に満たなくてもよい。無関係な本を推薦するくらいなら少ない方がましである。
 
 以下のJSON配列のみを返してください：
 [{"index": 0, "reason": "選んだ理由を2〜3文で", "category": "入門"}]
@@ -342,6 +355,7 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
           const recommendedResources = await selectRelevantBooks(
             candidates,
             guideData.title || inputValue,
+            guideData.summary || '',
             genAI
           )
           if (recommendedResources.length > 0) {
