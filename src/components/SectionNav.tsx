@@ -63,12 +63,12 @@ export default function SectionNav({ sections }: { sections: SectionItem[] }) {
         visible ? 'opacity-100' : 'pointer-events-none opacity-0'
       }`}
     >
-      <nav className="scrollbar-hide -mx-4 flex gap-1 overflow-x-auto px-4 py-2">
+      <nav className="-mx-4 flex flex-wrap gap-1.5 px-4 py-2">
         {sections.map((section) => (
           <button
             key={section.id}
             onClick={() => handleClick(section.id)}
-            className={`flex-shrink-0 rounded-full px-3 py-1 text-xs font-medium transition ${
+            className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
               activeId === section.id
                 ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
                 : 'text-stone-400 hover:text-stone-600 dark:hover:text-stone-300'

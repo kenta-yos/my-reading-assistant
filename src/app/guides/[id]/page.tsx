@@ -139,7 +139,7 @@ export default async function GuidePage({
       {/* ━━ 判断フェーズ ━━ */}
       {hasJudgmentPhase && (
         <div id="judgment" className="scroll-mt-24 space-y-8 sm:space-y-10">
-          <PhaseHeader title="判断フェーズ" subtitle="この本を読むべきかを見極める" />
+          <PhaseHeader step={1} title="判断フェーズ" subtitle="この本を読むべきかを見極める" />
 
           {/* 問題関心 */}
           {prereqs.problemFocus && (
@@ -227,7 +227,7 @@ export default async function GuidePage({
       )}
 
       {/* ━━ 準備フェーズ ━━ */}
-      <PhaseHeader title="準備フェーズ" subtitle="読むための土台をつくる" />
+      <PhaseHeader step={2} title="準備フェーズ" subtitle="読むための土台をつくる" />
 
       {/* Section 01 — 専門用語 */}
       {prereqs?.terminology?.length > 0 && (
@@ -504,15 +504,18 @@ function BookCard({ book, accent }: { book: Prerequisites['recommendedResources'
   )
 }
 
-function PhaseHeader({ title, subtitle }: { title: string; subtitle: string }) {
+function PhaseHeader({ step, title, subtitle }: { step: number; title: string; subtitle: string }) {
   return (
     <div className="flex items-center gap-3 pt-2">
-      <div className="h-px flex-1 bg-stone-200 dark:bg-stone-700" />
-      <div className="text-center">
-        <p className="text-sm font-bold text-stone-700 dark:text-stone-300">{title}</p>
-        <p className="text-xs text-stone-400 dark:text-stone-500">{subtitle}</p>
+      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/30">
+        <span className="text-xs font-bold leading-none text-violet-700 dark:text-violet-300">
+          STEP{'\n'}{step}
+        </span>
       </div>
-      <div className="h-px flex-1 bg-stone-200 dark:bg-stone-700" />
+      <div>
+        <p className="text-base font-bold text-stone-700 dark:text-stone-300">{title}</p>
+        <p className="text-sm text-stone-500 dark:text-stone-400">{subtitle}</p>
+      </div>
     </div>
   )
 }
