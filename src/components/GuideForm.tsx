@@ -81,7 +81,7 @@ function ProgressDisplay({
         <span className="text-xs tabular-nums text-stone-400">{displayPercent}%</span>
       </div>
 
-      <p className="text-xs text-stone-400">30秒ほどかかります。このままお待ちください。</p>
+      <p className="text-xs text-stone-400">このままお待ちください。</p>
     </div>
   )
 }
