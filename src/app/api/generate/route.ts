@@ -125,7 +125,8 @@ ${JSON.stringify(numbered, null, 2)}
 
   const response = await model.generateContent(prompt)
   const text = response.response.text()
-  const selections = JSON.parse(text) as { index: number; reason: string; category: '入門' | '発展' }[]
+  const parsed = parseJsonResponse(text)
+  const selections = (Array.isArray(parsed) ? parsed : []) as { index: number; reason: string; category: '入門' | '発展' }[]
 
   return selections
     .filter(s => s.index >= 0 && s.index < candidates.length)
@@ -359,6 +360,7 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
             prereqs.recommendedResources = recommendedResources
           }
         } catch (error) {
+          console.error('[selectRelevantBooks] failed:', error)
           if (isQuotaError(error)) {
             await prisma.apiUsage.upsert({
               where: { date: today },
