@@ -15,7 +15,6 @@ export async function GET() {
     date: today,
     count: usage?.count ?? 0,
     limit: DAILY_LIMIT,
-    blocked: usage?.blocked ?? false,
     remaining: Math.max(0, DAILY_LIMIT - (usage?.count ?? 0)),
   })
 }

@@ -36,12 +36,10 @@ export default async function Home() {
   ])
 
   const usedCount = todayUsage?.count ?? 0
-  const isBlocked = todayUsage?.blocked ?? false
   const usagePercent = Math.min(100, Math.round((usedCount / DAILY_LIMIT) * 100))
 
   const usageColor =
-    isBlocked ? 'bg-red-400'
-    : usagePercent >= 90 ? 'bg-red-400'
+    usagePercent >= 90 ? 'bg-red-400'
     : usagePercent >= 70 ? 'bg-amber-400'
     : 'bg-emerald-400'
 
@@ -77,11 +75,10 @@ export default async function Home() {
             <div className="mb-1.5 flex items-center justify-between">
               <span className="text-xs text-stone-500">
                 本日の使用量
-                {isBlocked && <span className="ml-2 text-red-500">⚠ 停止中</span>}
               </span>
               <span
                 className={`text-xs ${
-                  isBlocked || usagePercent >= 90
+                  usagePercent >= 90
                     ? 'text-red-500'
                     : usagePercent >= 70
                     ? 'text-amber-600'

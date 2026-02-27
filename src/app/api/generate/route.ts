@@ -177,16 +177,6 @@ export async function POST(request: NextRequest) {
   const today = getTodayJST()
   const usage = await prisma.apiUsage.findUnique({ where: { date: today } })
 
-  if (usage?.blocked) {
-    return NextResponse.json(
-      {
-        error:
-          '⚠️ Gemini API のエラーが検出されたため、本日のリクエストをすべて停止しています。明日リセットされます。',
-      },
-      { status: 503 }
-    )
-  }
-
   if ((usage?.count ?? 0) >= DAILY_LIMIT) {
     return NextResponse.json(
       {
@@ -306,21 +296,14 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
     responseText = aiResponse.response.text()
   } catch (error) {
     if (isQuotaError(error)) {
-      // 課金リスクのあるエラー → 即時遮断フラグを立てる
-      await prisma.apiUsage.upsert({
-        where: { date: today },
-        create: { date: today, count: 1, blocked: true },
-        update: { blocked: true },
-      })
       return NextResponse.json(
         {
           error:
-            '⚠️ Gemini API の使用量上限エラーが発生しました。課金を防ぐため本日のリクエストをすべて停止しました。明日リセットされます。',
+            'Gemini API のレート制限に達しました。1分ほど待ってから再度お試しください。',
         },
-        { status: 503 }
+        { status: 429 }
       )
     }
-    // その他のエラーは通常のサーバーエラーとして返す
     const message = error instanceof Error ? error.message : '不明なエラー'
     return NextResponse.json({ error: `AI生成エラー: ${message}` }, { status: 500 })
   }
