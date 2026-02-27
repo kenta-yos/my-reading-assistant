@@ -96,7 +96,7 @@ export async function searchNdlByKeywords(
 
   const results = await Promise.allSettled(
     queries.map(async ({ keywords, intent }) => {
-      const cql = keywords.map(k => `keyword="${k}"`).join(' AND ')
+      const cql = keywords.map(k => `anywhere="${k}"`).join(' AND ')
       const url =
         `https://ndlsearch.ndl.go.jp/api/sru` +
         `?operation=searchRetrieve` +
