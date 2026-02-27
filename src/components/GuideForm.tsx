@@ -125,15 +125,22 @@ export default function GuideForm() {
         body: JSON.stringify(payload),
       })
 
-      const data = await res.json()
       if (!res.ok) {
-        setError(data.error || '生成に失敗しました')
+        let message = `サーバーエラー (${res.status})`
+        try {
+          const data = await res.json()
+          message = data.error || message
+        } catch {
+          // JSON parse failed — likely HTML error page (e.g. Vercel timeout)
+        }
+        setError(message)
         return
       }
 
+      const data = await res.json()
       router.push(`/guides/${data.id}`)
     } catch {
-      setError('ネットワークエラーが発生しました')
+      setError('ネットワークエラーが発生しました。通信状況を確認してください。')
     } finally {
       setIsLoading(false)
     }
