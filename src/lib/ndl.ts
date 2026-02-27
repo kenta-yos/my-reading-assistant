@@ -76,6 +76,7 @@ export function parseRecords(sruXml: string): BookResult[] {
 
     const isbnMatch = inner.match(/<dcterms:identifier[^>]*ISBN[^>]*>([^<]+)</)
     const isbn = isbnMatch?.[1]?.trim() ?? ''
+    if (!isbn) continue
 
     books.push({ title, authors, publisher, year, isbn })
   }

@@ -28,6 +28,7 @@ type Prerequisites = {
     year: string
     isbn: string
     reason: string
+    category?: '入門' | '発展'
   }[]
 }
 
@@ -362,44 +363,51 @@ export default async function GuidePage({
       {/* Section 05 — 関連書籍 */}
       {prereqs?.recommendedResources && prereqs.recommendedResources.length > 0 && (
         <Section number="05" title="関連書籍" accent="cyan">
-          <div className="space-y-3">
-            {prereqs.recommendedResources.map((book, i) => (
-              <div
-                key={i}
-                className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900"
-              >
-                <div className="h-0.5 bg-cyan-400" />
-                <div className="p-5">
-                  <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-3">
-                    <p className="font-semibold text-stone-950 dark:text-stone-100">
-                      {book.isbn ? (
-                        <a
-                          href={`https://www.hanmoto.com/bd/isbn/${book.isbn}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="underline decoration-cyan-300 underline-offset-2 hover:decoration-cyan-500"
-                        >
-                          {book.title}
-                        </a>
-                      ) : (
-                        book.title
-                      )}
-                    </p>
-                  </div>
-                  <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-                    {[book.author, book.publisher, book.year ? `${book.year}年` : '']
-                      .filter(Boolean)
-                      .join(' / ')}
-                  </p>
-                  {book.reason && (
-                    <p className="mt-2 text-sm leading-relaxed text-stone-700 dark:text-stone-300">
-                      {book.reason}
-                    </p>
-                  )}
-                </div>
+          {(() => {
+            const introBooks = prereqs.recommendedResources!.filter(b => b.category === '入門')
+            const advancedBooks = prereqs.recommendedResources!.filter(b => b.category === '発展')
+            const uncategorized = prereqs.recommendedResources!.filter(b => !b.category)
+            const hasCategories = introBooks.length > 0 || advancedBooks.length > 0
+
+            return (
+              <div className="space-y-5">
+                {hasCategories ? (
+                  <>
+                    {introBooks.length > 0 && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
+                            入門
+                          </span>
+                          <span className="text-xs text-stone-400">読む前に前提知識を補う</span>
+                        </div>
+                        {introBooks.map((book, i) => (
+                          <BookCard key={`intro-${i}`} book={book} accent="emerald" />
+                        ))}
+                      </div>
+                    )}
+                    {advancedBooks.length > 0 && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                            発展
+                          </span>
+                          <span className="text-xs text-stone-400">読んだ後にさらに深める</span>
+                        </div>
+                        {advancedBooks.map((book, i) => (
+                          <BookCard key={`adv-${i}`} book={book} accent="amber" />
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  uncategorized.map((book, i) => (
+                    <BookCard key={i} book={book} accent="cyan" />
+                  ))
+                )}
               </div>
-            ))}
-          </div>
+            )
+          })()}
         </Section>
       )}
 
@@ -419,14 +427,69 @@ export default async function GuidePage({
   )
 }
 
-type AccentColor = 'indigo' | 'teal' | 'amber' | 'rose' | 'cyan'
+type AccentColor = 'indigo' | 'teal' | 'amber' | 'rose' | 'cyan' | 'emerald'
 
 const badgeStyle: Record<AccentColor, string> = {
-  indigo: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
-  teal:   'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300',
-  amber:  'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
-  rose:   'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300',
-  cyan:   'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300',
+  indigo:  'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
+  teal:    'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300',
+  amber:   'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+  rose:    'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300',
+  cyan:    'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300',
+  emerald: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
+}
+
+const accentTopBar: Record<AccentColor, string> = {
+  indigo:  'bg-indigo-400',
+  teal:    'bg-teal-400',
+  amber:   'bg-amber-400',
+  rose:    'bg-rose-400',
+  cyan:    'bg-cyan-400',
+  emerald: 'bg-emerald-400',
+}
+
+const accentLink: Record<AccentColor, string> = {
+  indigo:  'decoration-indigo-300 hover:decoration-indigo-500',
+  teal:    'decoration-teal-300 hover:decoration-teal-500',
+  amber:   'decoration-amber-300 hover:decoration-amber-500',
+  rose:    'decoration-rose-300 hover:decoration-rose-500',
+  cyan:    'decoration-cyan-300 hover:decoration-cyan-500',
+  emerald: 'decoration-emerald-300 hover:decoration-emerald-500',
+}
+
+function BookCard({ book, accent }: { book: Prerequisites['recommendedResources'] extends (infer T)[] | undefined ? T : never; accent: AccentColor }) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
+      <div className={`h-0.5 ${accentTopBar[accent]}`} />
+      <div className="p-5">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-3">
+          <p className="font-semibold text-stone-950 dark:text-stone-100">
+            {book.isbn ? (
+              <a
+                href={`https://www.hanmoto.com/bd/isbn/${book.isbn}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`underline underline-offset-2 ${accentLink[accent]}`}
+              >
+                {book.title}
+              </a>
+            ) : (
+              book.title
+            )}
+          </p>
+        </div>
+        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+          {[book.author, book.publisher, book.year ? `${book.year}年` : '']
+            .filter(Boolean)
+            .join(' / ')}
+        </p>
+        {book.reason && (
+          <p className="mt-2 text-sm leading-relaxed text-stone-700 dark:text-stone-300">
+            {book.reason}
+          </p>
+        )}
+      </div>
+    </div>
+  )
 }
 
 function PhaseHeader({ title, subtitle }: { title: string; subtitle: string }) {

@@ -67,7 +67,7 @@ async function selectRelevantBooks(
   candidates: NdlCandidate[],
   bookTitle: string,
   genAI: GoogleGenerativeAI
-): Promise<{ title: string; author: string; publisher: string; year: string; isbn: string; reason: string }[]> {
+): Promise<{ title: string; author: string; publisher: string; year: string; isbn: string; reason: string; category: '入門' | '発展' }[]> {
   const numbered = candidates.map((c, i) => ({
     index: i,
     title: c.title,
@@ -90,28 +90,37 @@ async function selectRelevantBooks(
 
 ${JSON.stringify(numbered, null, 2)}
 
-この中から、「${bookTitle}」を読む前後に参照すると有益な書籍を3〜5冊選んでください。
-選書基準：
-- 前提知識を補える入門書・教科書
-- 同じテーマを別の角度から扱っている本
-- 著者の他の重要著作
-- 知的系譜をたどれる古典・影響源
+この中から「入門書」を最大2冊、「発展書」を最大2冊選んでください。該当する良い本がなければ少なくて構いません。無理に数を埋めないでください。
+
+■ カテゴリの定義
+- 入門（入門書）: 「${bookTitle}」を読む前に前提知識を補える教科書・入門書・新書。その分野の基礎を平易に解説しているもの。
+- 発展（発展書）: 同じテーマをより深く扱う専門書、著者の他の重要著作、知的系譜をたどれる古典・影響源。「${bookTitle}」を読んだ後に進むべき本。
+
+■ 選書の優先基準
+- 同程度の候補なら出版年が新しい方を優先せよ。ただし分野の古典的名著は例外として許容する。
+- 単著を優先せよ。
+
+■ 絶対に選んではいけない本
+全集、辞典、事典、ハンドブック、年鑑、白書、統計集、雑誌、紀要、論文集、講座もの、シリーズ全巻セット。
+タイトルに「全集」「辞典」「事典」「ハンドブック」「年鑑」「白書」「講座」「紀要」「研究報告」が含まれる本は選ぶな。
 
 以下のJSON配列のみを返してください：
-[{"index": 0, "reason": "選んだ理由を2〜3文で"}]
+[{"index": 0, "reason": "選んだ理由を2〜3文で", "category": "入門"}]
 
 注意：
 - index は上記リストの index をそのまま使うこと
+- category は必ず "入門" または "発展" のどちらかにすること
 - reason は具体的に書くこと（「関連がある」だけでは不十分）
 - 明らかに無関係な本は選ばないこと`
 
   const response = await model.generateContent(prompt)
   const text = response.response.text()
-  const selections = JSON.parse(text) as { index: number; reason: string }[]
+  const selections = JSON.parse(text) as { index: number; reason: string; category: '入門' | '発展' }[]
 
   return selections
     .filter(s => s.index >= 0 && s.index < candidates.length)
-    .slice(0, 5)
+    .filter(s => s.category === '入門' || s.category === '発展')
+    .slice(0, 4)
     .map(s => {
       const c = candidates[s.index]
       return {
@@ -121,6 +130,7 @@ ${JSON.stringify(numbered, null, 2)}
         year: c.year,
         isbn: c.isbn,
         reason: s.reason,
+        category: s.category,
       }
     })
 }
@@ -245,7 +255,8 @@ difficultyLevel は1〜5の整数で返すこと：
 4 = 上級（その分野の専門的な予備知識が必要）
 5 = 専門（大学院レベル・研究者向け）
 
-ndlSearchQueries は3〜5項目。各項目の keywords は2〜3語の配列。具体的な書名を含めるな。分野名・テーマ・著者名・概念を組み合わせよ。intent にはその検索の意図を簡潔に書くこと。
+ndlSearchQueries は4〜6項目。各項目の keywords は2〜3語の配列。具体的な書名を含めるな。
+入門書を見つけるためのクエリ（例: ["教育社会学", "入門"]、["社会学", "教科書"]）を2〜3項目、発展書を見つけるためのクエリ（例: 著者名+テーマ、関連する専門概念）を2〜3項目、意識的に分けて生成せよ。intent にはその検索の意図（入門書を探す／発展書を探す）を明記すること。
 
 各項目の目安：terminology 10〜15項目、keyEvents 3〜6項目、highSchoolBasics 3〜6項目（科目をまたいでよい）、prerequisiteKnowledge 3〜5項目。
 keyEvents の significance は「ただ重要」ではなく、その出来事が何をどう変えたか・なぜこの本に関係するかを具体的に書く。
