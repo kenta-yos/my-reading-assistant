@@ -125,8 +125,7 @@ export default async function Home() {
           Lukaを気に入っていただけましたか？
         </p>
         <p className="mt-2 text-sm leading-relaxed text-stone-600 dark:text-stone-400">
-          サービスの運営にはAIのAPI利用料がかかっています。<br />
-          もしLukaが役に立ったら、応援していただけるととても嬉しいです。
+          サービスの運営にはAIのAPI利用料がかかっています。もしLukaが役に立ったら、応援していただけるととても嬉しいです。
         </p>
         <a
           href="https://ofuse.me/bdd35efd"

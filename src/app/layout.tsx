@@ -57,7 +57,7 @@ export default function RootLayout({
         </header>
         <main className="mx-auto max-w-3xl px-4 py-8 sm:py-12">{children}</main>
         <footer className="border-t border-stone-200/80 dark:border-stone-800/80">
-          <div className="mx-auto flex max-w-3xl flex-col items-center gap-1.5 px-4 py-4">
+          <div className="mx-auto max-w-3xl px-4 py-4 text-center">
             <a
               href="https://bsky.app/profile/yomuhito21.bsky.social"
               target="_blank"
@@ -65,14 +65,6 @@ export default function RootLayout({
               className="text-xs text-stone-400 transition hover:text-sky-500 dark:text-stone-500 dark:hover:text-sky-400"
             >
               機能要望・フィードバックはこちら（@yomuhito21.bsky.social）
-            </a>
-            <a
-              href="https://ofuse.me/bdd35efd"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-stone-400 transition hover:text-indigo-500 dark:text-stone-500 dark:hover:text-indigo-400"
-            >
-              Lukaを応援する
             </a>
           </div>
         </footer>
