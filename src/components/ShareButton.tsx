@@ -30,6 +30,13 @@ export default function ShareButton({ title }: { title: string }) {
     window.open(bskyUrl, '_blank', 'noopener,noreferrer')
   }
 
+  const handleX = () => {
+    const url = window.location.href
+    const text = `${title}\n読書アシスタントLukaで前提知識ガイドを生成しました`
+    const xUrl = `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`
+    window.open(xUrl, '_blank', 'noopener,noreferrer')
+  }
+
   return (
     <div className="flex items-center gap-1.5">
       <button
@@ -46,6 +53,15 @@ export default function ShareButton({ title }: { title: string }) {
             <path d="M13 4.5a2.5 2.5 0 11.702 1.737L6.97 9.604a2.518 2.518 0 010 .792l6.733 3.367a2.5 2.5 0 11-.671 1.341l-6.733-3.367a2.5 2.5 0 110-3.474l6.733-3.367A2.52 2.52 0 0113 4.5z" />
           </svg>
         )}
+      </button>
+      <button
+        onClick={handleX}
+        title="Xに投稿"
+        className="rounded-lg border border-stone-200 p-1.5 text-stone-500 transition hover:border-stone-400 hover:text-stone-900 dark:border-stone-700 dark:text-stone-400 dark:hover:border-stone-500 dark:hover:text-stone-100"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+        </svg>
       </button>
       <button
         onClick={handleBluesky}
