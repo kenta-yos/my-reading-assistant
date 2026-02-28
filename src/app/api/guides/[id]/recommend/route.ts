@@ -104,17 +104,24 @@ ${JSON.stringify(numbered, null, 2)}
       .trim(),
   }))
 
-  // 同じ候補が複数回選ばれた場合は最初の1つだけ残す
-  const seenIndices = new Set<number>()
-  const unique = selections.filter(s => {
-    if (seenIndices.has(s.index)) return false
-    seenIndices.add(s.index)
-    return true
-  })
+  // 同一index・同一タイトル（版違い含む）の重複を排除
+  const normalizeTitle = (t: string) =>
+    t.replace(/[=＝:：].*/g, '').replace(/\s+/g, '').replace(/[第新改訂増補版\d]+版$/g, '')
 
-  return unique
+  const seenIndices = new Set<number>()
+  const seenTitles = new Set<string>()
+
+  return selections
     .filter(s => s.index >= 0 && s.index < candidates.length)
     .filter(s => s.category === '入門' || s.category === '発展')
+    .filter(s => {
+      if (seenIndices.has(s.index)) return false
+      const key = normalizeTitle(candidates[s.index].title)
+      if (seenTitles.has(key)) return false
+      seenIndices.add(s.index)
+      seenTitles.add(key)
+      return true
+    })
     .slice(0, 6)
     .map(s => {
       const c = candidates[s.index]
