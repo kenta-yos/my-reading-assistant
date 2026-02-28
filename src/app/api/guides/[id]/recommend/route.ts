@@ -5,12 +5,7 @@ import { searchNdlByKeywords, NdlSearchQuery, NdlCandidate } from '@/lib/ndl'
 
 export const maxDuration = 60
 
-const DAILY_LIMIT = 200
-
-function getTodayJST(): string {
-  const jst = new Date(Date.now() + 9 * 60 * 60 * 1000)
-  return jst.toISOString().split('T')[0]
-}
+// gemini-2.0-flash は 1500 RPD なので日次制限チェック不要
 
 function isQuotaError(error: unknown): boolean {
   if (!(error instanceof Error)) return false
@@ -40,7 +35,7 @@ async function selectRelevantBooks(
   }))
 
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-2.0-flash',
     generationConfig: {
       responseMimeType: 'application/json',
       temperature: 0.2,
@@ -116,18 +111,6 @@ export async function POST(
     return NextResponse.json({ error: 'GEMINI_API_KEY が設定されていません' }, { status: 500 })
   }
 
-  // ── 使用量チェック ──────────────────────────────────────
-  const today = getTodayJST()
-  const usage = await prisma.apiUsage.findUnique({ where: { date: today } })
-
-  if ((usage?.count ?? 0) >= DAILY_LIMIT) {
-    return NextResponse.json(
-      { error: `本日の上限（${DAILY_LIMIT}回）に達しました。明日またお試しください。` },
-      { status: 429 }
-    )
-  }
-  // ──────────────────────────────────────────────────────
-
   const guide = await prisma.guide.findUnique({ where: { id } })
   if (!guide) {
     return NextResponse.json({ error: 'ガイドが見つかりません' }, { status: 404 })
@@ -153,13 +136,6 @@ export async function POST(
       guide.summary || '',
       genAI
     )
-
-    // 成功時のみカウントをインクリメント
-    await prisma.apiUsage.upsert({
-      where: { date: today },
-      create: { date: today, count: 1 },
-      update: { count: { increment: 1 } },
-    })
 
     // ガイドの prerequisites を更新
     const updatedPrereqs = { ...prereqs, recommendedResources }

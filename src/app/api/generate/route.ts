@@ -8,7 +8,7 @@ export const maxDuration = 60
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
-// 1日の上限（無料枠250/日の80%）
+// 1日の上限（gemini-2.0-flash 無料枠は1500 RPD）
 const DAILY_LIMIT = 200
 
 // JST（UTC+9）の今日の日付を返す
@@ -193,7 +193,7 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
   let responseText: string
   try {
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.0-flash',
       systemInstruction: systemPrompt,
       generationConfig: { temperature: 0.2 },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
