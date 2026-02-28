@@ -39,7 +39,7 @@ export default function BookmarkButton({
       onClick={toggle}
       disabled={isLoading}
       title={isBookmarked ? 'ブックマーク解除' : 'ブックマークする'}
-      className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition disabled:opacity-60 ${
+      className={`rounded-lg border p-1.5 transition disabled:opacity-60 ${
         isBookmarked
           ? 'border-amber-300 bg-amber-50 text-amber-600 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-400'
           : 'border-stone-200 text-stone-500 hover:border-amber-300 hover:text-amber-500 dark:border-stone-700 dark:text-stone-400 dark:hover:border-amber-700 dark:hover:text-amber-400'
@@ -66,7 +66,6 @@ export default function BookmarkButton({
           />
         </svg>
       )}
-      {isBookmarked ? 'ブックマーク済み' : 'ブックマーク'}
     </button>
   )
 }
