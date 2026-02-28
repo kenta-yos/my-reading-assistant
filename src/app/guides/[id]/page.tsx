@@ -440,6 +440,22 @@ export default async function GuidePage({
         <p className="mt-4 text-xs text-stone-400 dark:text-stone-500">
           AIが生成したコンテンツです。著者の所属・経歴などの事実情報は念のため原典でご確認ください。
         </p>
+
+        {/* 応援カード */}
+        <div className="mt-10 rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-6 text-center dark:border-indigo-900/30 dark:from-indigo-950/20 dark:to-stone-900">
+          <p className="text-sm leading-relaxed text-stone-600 dark:text-stone-400">
+            サービスの運営にはAIのAPI利用料がかかっています。<br />
+            もしLukaが役に立ったら、応援していただけるととても嬉しいです。
+          </p>
+          <a
+            href="https://ofuse.me/bdd35efd"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-block rounded-full bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+          >
+            コーヒー1杯分の応援をする
+          </a>
+        </div>
       </div>
     </div>
   )
