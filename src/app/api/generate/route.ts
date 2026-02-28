@@ -332,7 +332,9 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
   if (prereqs?.ndlSearchQueries) {
     try {
       const queries = prereqs.ndlSearchQueries as NdlSearchQuery[]
+      console.log('[NDL] queries:', queries.length)
       const candidates = await searchNdlByKeywords(queries)
+      console.log('[NDL] candidates:', candidates.length)
       if (candidates.length > 0) {
         try {
           const recommendedResources = await selectRelevantBooks(
@@ -341,18 +343,21 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
             guideData.summary || '',
             genAI
           )
+          console.log('[selectRelevantBooks] result:', recommendedResources.length)
           if (recommendedResources.length > 0) {
             prereqs.recommendedResources = recommendedResources
           }
         } catch (error) {
           console.error('[selectRelevantBooks] failed:', error)
-          // 選書失敗時はガイドを推薦なしで返す（blocked にはしない）
+          // 選書失敗時はガイドを推薦なしで返す
         }
       }
-    } catch {
-      // グレースフルデグレード: NDL 検索失敗時はスキップ
+    } catch (error) {
+      console.error('[NDL] search failed:', error)
     }
     delete prereqs.ndlSearchQueries
+  } else {
+    console.log('[NDL] no ndlSearchQueries in guideData')
   }
   // ──────────────────────────────────────────────────────
 
