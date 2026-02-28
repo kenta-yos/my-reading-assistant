@@ -495,8 +495,11 @@ function BookCard({ book, accent }: { book: Prerequisites['recommendedResources'
             )}
           </p>
         </div>
-        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-          {[book.author, book.publisher, book.year ? `${book.year}年` : '']
+        <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">
+          {book.author}
+        </p>
+        <p className="mt-0.5 text-xs text-stone-400 dark:text-stone-500">
+          {[book.publisher, book.year ? `${book.year}年` : '']
             .filter(Boolean)
             .join(' / ')}
         </p>
