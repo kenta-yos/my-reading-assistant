@@ -51,7 +51,7 @@ ${JSON.stringify(numbered, null, 2)}
 ■ あなたのタスク
 1. まずGoogle検索を使い、「${bookTitle}」の内容・テーマ・著者の主張を正確に把握せよ。
 2. 次に、候補リストの中で知らない本・判断に迷う本があればGoogle検索で内容を確認せよ。
-3. その上で「入門書」を必ず2冊、「発展書」を必ず2冊、合計4冊選べ。
+3. その上で「入門書」を必ず3冊、「発展書」を必ず3冊、合計6冊選べ。
 
 ■ カテゴリの定義
 - 入門（入門書）: 「${bookTitle}」を読む前に前提知識を補える教科書・入門書・新書。その分野の基礎を平易に解説しているもの。
@@ -107,7 +107,7 @@ ${JSON.stringify(numbered, null, 2)}
   return selections
     .filter(s => s.index >= 0 && s.index < candidates.length)
     .filter(s => s.category === '入門' || s.category === '発展')
-    .slice(0, 4)
+    .slice(0, 6)
     .map(s => {
       const c = candidates[s.index]
       return {
