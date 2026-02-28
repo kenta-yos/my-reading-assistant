@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { prisma } from '@/lib/prisma'
 import { cleanupExpiredGuides } from '@/lib/cleanup'
-import { searchNdlByKeywords, NdlSearchQuery, NdlCandidate } from '@/lib/ndl'
 
 
 export const maxDuration = 60
@@ -61,101 +60,6 @@ function parseJsonResponse(text: string): object {
     }
     throw new Error('JSONの解析に失敗しました')
   }
-}
-
-async function selectRelevantBooks(
-  candidates: NdlCandidate[],
-  bookTitle: string,
-  summary: string,
-  genAI: GoogleGenerativeAI
-): Promise<{ title: string; author: string; publisher: string; year: string; isbn: string; reason: string; category: '入門' | '発展' }[]> {
-  const numbered = candidates.map((c, i) => ({
-    index: i,
-    title: c.title,
-    authors: c.authors.join('、'),
-    publisher: c.publisher,
-    year: c.year,
-    searchIntent: c.searchIntent,
-  }))
-
-  const prompt = `あなたは読書アドバイザーです。ユーザーが「${bookTitle}」を読もうとしています。
-
-■ この本の概要
-${summary}
-
-以下はNDL（国立国会図書館）から取得した書籍候補リストです。各候補の searchIntent はその本が検索された意図です。
-
-${JSON.stringify(numbered, null, 2)}
-
-この中から「入門書」を必ず2冊、「発展書」を必ず2冊、合計4冊選んでください。
-
-■ カテゴリの定義
-- 入門（入門書）: 「${bookTitle}」を読む前に前提知識を補える教科書・入門書・新書。その分野の基礎を平易に解説しているもの。
-- 発展（発展書）: 同じテーマをより深く扱う専門書、著者の他の重要著作、知的系譜をたどれる古典・影響源。「${bookTitle}」を読んだ後に進むべき本。
-
-■ 選書の最優先基準
-- 対象書籍「${bookTitle}」のテーマと直接関連する本を最優先せよ。
-- 分野全般の概論より、対象書籍が扱う具体的なテーマに即した本を選べ。
-- 各候補の searchIntent を参考にし、その意図に合ったカテゴリ（入門 or 発展）に分類せよ。
-
-■ その他の優先基準
-- 同程度の候補なら出版年が新しい方を優先せよ。ただし分野の古典的名著は例外として許容する。
-- 単著を優先せよ。
-
-■ 絶対に選んではいけない本
-全集、辞典、事典、ハンドブック、年鑑、白書、統計集、雑誌、紀要、論文集、講座もの、シリーズ全巻セット。
-タイトルに「全集」「辞典」「事典」「ハンドブック」「年鑑」「白書」「講座」「紀要」「研究報告」が含まれる本は選ぶな。
-
-以下のJSON配列のみを返してください：
-[{"index": 0, "reason": "選んだ理由を2〜3文で", "category": "入門"}]
-
-注意：
-- index は上記リストの index をそのまま使うこと
-- category は必ず "入門" または "発展" のどちらかにすること
-- reason は具体的に書くこと（「関連がある」だけでは不十分）
-- 明らかに無関係な本は選ばないこと`
-
-  // SDK が thinkingConfig 未対応のため REST API を直接呼び出す
-  const apiKey = process.env.GEMINI_API_KEY!
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          responseMimeType: 'application/json',
-          temperature: 0.2,
-          thinkingConfig: { thinkingBudget: 0 },
-        },
-      }),
-    }
-  )
-  if (!res.ok) {
-    throw new Error(`Gemini API error: ${res.status} ${await res.text()}`)
-  }
-  const json = await res.json()
-  const text = json.candidates?.[0]?.content?.parts?.find((p: { text?: string }) => p.text)?.text ?? '[]'
-  const parsed = parseJsonResponse(text)
-  const selections = (Array.isArray(parsed) ? parsed : []) as { index: number; reason: string; category: '入門' | '発展' }[]
-
-  return selections
-    .filter(s => s.index >= 0 && s.index < candidates.length)
-    .filter(s => s.category === '入門' || s.category === '発展')
-    .slice(0, 4)
-    .map(s => {
-      const c = candidates[s.index]
-      return {
-        title: c.title,
-        author: c.authors.join('、'),
-        publisher: c.publisher,
-        year: c.year,
-        isbn: c.isbn,
-        reason: s.reason,
-        category: s.category,
-      }
-    })
 }
 
 export async function POST(request: NextRequest) {
@@ -236,11 +140,11 @@ export async function POST(request: NextRequest) {
   "title": "コンテンツの正式名称",
   "summary": "この本/記事が何を主張しているか、どんな問いに答えようとしているかの全体像（4〜6文。読む前に「地図」として機能する記述にすること）",
   "prerequisites": {
-    "problemFocus": "この本が扱う社会問題・学術的な問い・テーマを1〜2文で要約。なぜ今これを読むべきかの動機付けになる記述",
-    "postReadingOutcome": "読了後にあなたは何ができるようになるか、どんな視点を得られるかを具体的に記述（2〜3文）",
+    "problemFocus": "この本が扱う社会問題・学術的な問い・テーマの要約。なぜこのテーマが重要なのか、なぜ今これを読むべきかの動機付けになる記述（3〜5文）",
+    "postReadingOutcome": "読了後にあなたは何ができるようになるか、どんな視点・思考の枠組みを得られるか、それによって世界がどう違って見えるようになるかを具体的に記述（4〜6文）",
     "difficultyLevel": 3,
-    "difficultyExplanation": "なぜその難易度かの理由。どんな知識が必要でどこが難しいかを具体的に（2〜3文）",
-    "prerequisiteKnowledge": ["この本を読む前に知っておくべき前提知識や概念を列挙"],
+    "difficultyExplanation": "なぜその難易度かの理由。どの分野のどんな知識が前提として必要か、どの章・トピックが特に難しいか、どんな読者なら苦労なく読めるかを具体的に（3〜5文）",
+    "prerequisiteKnowledge": ["この本を読む前に知っておくべき前提知識や概念を列挙。各項目は概念名だけでなく、なぜそれが必要かの一言説明を添えること（例：『マクロ経済学の基礎 — GDP・インフレ・金利の関係を理解していないと第3章以降の議論についていけない』）"],
     "terminology": [
       {"term": "専門用語", "definition": "この本の文脈での意味と重要性（2〜3文）"}
     ],
@@ -271,7 +175,7 @@ difficultyLevel は1〜5の整数で返すこと：
 ndlSearchQueries は4〜6項目。各項目の keywords は2〜3語の配列。具体的な書名を含めるな。
 入門書を見つけるためのクエリ（例: ["教育社会学", "入門"]、["社会学", "教科書"]）を2〜3項目、発展書を見つけるためのクエリ（例: 著者名+テーマ、関連する専門概念）を2〜3項目、意識的に分けて生成せよ。intent にはその検索の意図（入門書を探す／発展書を探す）を明記すること。
 
-各項目の目安：terminology 10〜15項目、keyEvents 3〜6項目、highSchoolBasics 3〜6項目（科目をまたいでよい）、prerequisiteKnowledge 3〜5項目。
+各項目の目安：terminology 10〜15項目、keyEvents 3〜6項目、highSchoolBasics 3〜6項目（科目をまたいでよい）、prerequisiteKnowledge 5〜8項目。
 keyEvents の significance は「ただ重要」ではなく、その出来事が何をどう変えたか・なぜこの本に関係するかを具体的に書く。
 highSchoolBasics の explanation は必ず「定義→仕組み・具体例→本書との接続」の流れで5〜7文。「重要です」「押さえておきましょう」という紹介文にしない。読者が概念を本当に理解できるレベルまで書く。
 経済学の本なら「需要と供給」「比較優位」、進化論の本なら「自然選択」「遺伝的浮動」、哲学書なら「形而上学」「演繹と帰納」のような教科書レベルの基礎を具体的に列挙すること。`
@@ -336,40 +240,6 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
       { status: 500 }
     )
   }
-
-  // ── NDL 検索 → Gemini 選書で実在書籍を取得 ─────────────
-  const prereqs = guideData.prerequisites as Record<string, unknown> | undefined
-  if (prereqs?.ndlSearchQueries) {
-    try {
-      const queries = prereqs.ndlSearchQueries as NdlSearchQuery[]
-      console.log('[NDL] queries:', queries.length)
-      const candidates = await searchNdlByKeywords(queries)
-      console.log('[NDL] candidates:', candidates.length)
-      if (candidates.length > 0) {
-        try {
-          const recommendedResources = await selectRelevantBooks(
-            candidates,
-            guideData.title || inputValue,
-            guideData.summary || '',
-            genAI
-          )
-          console.log('[selectRelevantBooks] result:', recommendedResources.length)
-          if (recommendedResources.length > 0) {
-            prereqs.recommendedResources = recommendedResources
-          }
-        } catch (error) {
-          console.error('[selectRelevantBooks] failed:', error)
-          // 選書失敗時はガイドを推薦なしで返す
-        }
-      }
-    } catch (error) {
-      console.error('[NDL] search failed:', error)
-    }
-    delete prereqs.ndlSearchQueries
-  } else {
-    console.log('[NDL] no ndlSearchQueries in guideData')
-  }
-  // ──────────────────────────────────────────────────────
 
   // 期限切れガイドを非同期でクリーンアップ（失敗しても無視）
   cleanupExpiredGuides().catch(() => {})

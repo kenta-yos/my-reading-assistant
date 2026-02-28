@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import DeleteButton from './DeleteButton'
 import BookmarkButton from '@/components/BookmarkButton'
 import SectionNav from '@/components/SectionNav'
+import RecommendButton from '@/components/RecommendButton'
 
 type Prerequisites = {
   // 判断フェーズ
@@ -31,6 +32,7 @@ type Prerequisites = {
     reason: string
     category?: '入門' | '発展'
   }[]
+  ndlSearchQueries?: { keywords: string[]; intent: string }[]
 }
 
 // 新5段階
@@ -87,7 +89,7 @@ export default async function GuidePage({
     prereqs?.domainContext && { id: 'context', label: 'コンテクスト' },
     prereqs?.highSchoolBasics?.length > 0 && { id: 'basics', label: '基礎知識' },
     (prereqs?.aboutAuthor || prereqs?.intellectualLineage) && { id: 'author', label: '著者' },
-    prereqs?.recommendedResources && prereqs.recommendedResources.length > 0 && { id: 'books', label: '関連書籍' },
+    (prereqs?.recommendedResources?.length || prereqs?.ndlSearchQueries?.length) && { id: 'books', label: '関連書籍' },
   ].filter(Boolean) as { id: string; label: string }[]
 
   return (
@@ -373,53 +375,57 @@ export default async function GuidePage({
       )}
 
       {/* Section 05 — 関連書籍 */}
-      {prereqs?.recommendedResources && prereqs.recommendedResources.length > 0 && (
+      {(prereqs?.recommendedResources?.length || prereqs?.ndlSearchQueries?.length) && (
         <Section id="books" number="05" title="関連書籍" accent="cyan">
-          {(() => {
-            const introBooks = prereqs.recommendedResources!.filter(b => b.category === '入門')
-            const advancedBooks = prereqs.recommendedResources!.filter(b => b.category === '発展')
-            const uncategorized = prereqs.recommendedResources!.filter(b => !b.category)
-            const hasCategories = introBooks.length > 0 || advancedBooks.length > 0
+          {prereqs.recommendedResources && prereqs.recommendedResources.length > 0 ? (
+            (() => {
+              const introBooks = prereqs.recommendedResources!.filter(b => b.category === '入門')
+              const advancedBooks = prereqs.recommendedResources!.filter(b => b.category === '発展')
+              const uncategorized = prereqs.recommendedResources!.filter(b => !b.category)
+              const hasCategories = introBooks.length > 0 || advancedBooks.length > 0
 
-            return (
-              <div className="space-y-5">
-                {hasCategories ? (
-                  <>
-                    {introBooks.length > 0 && (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
-                            入門
-                          </span>
-                          <span className="text-xs text-stone-400">読む前に前提知識を補う</span>
+              return (
+                <div className="space-y-5">
+                  {hasCategories ? (
+                    <>
+                      {introBooks.length > 0 && (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
+                              入門
+                            </span>
+                            <span className="text-xs text-stone-400">読む前に前提知識を補う</span>
+                          </div>
+                          {introBooks.map((book, i) => (
+                            <BookCard key={`intro-${i}`} book={book} accent="emerald" />
+                          ))}
                         </div>
-                        {introBooks.map((book, i) => (
-                          <BookCard key={`intro-${i}`} book={book} accent="emerald" />
-                        ))}
-                      </div>
-                    )}
-                    {advancedBooks.length > 0 && (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-                            発展
-                          </span>
-                          <span className="text-xs text-stone-400">読んだ後にさらに深める</span>
+                      )}
+                      {advancedBooks.length > 0 && (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                              発展
+                            </span>
+                            <span className="text-xs text-stone-400">読んだ後にさらに深める</span>
+                          </div>
+                          {advancedBooks.map((book, i) => (
+                            <BookCard key={`adv-${i}`} book={book} accent="amber" />
+                          ))}
                         </div>
-                        {advancedBooks.map((book, i) => (
-                          <BookCard key={`adv-${i}`} book={book} accent="amber" />
-                        ))}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  uncategorized.map((book, i) => (
-                    <BookCard key={i} book={book} accent="cyan" />
-                  ))
-                )}
-              </div>
-            )
-          })()}
+                      )}
+                    </>
+                  ) : (
+                    uncategorized.map((book, i) => (
+                      <BookCard key={i} book={book} accent="cyan" />
+                    ))
+                  )}
+                </div>
+              )
+            })()
+          ) : (
+            <RecommendButton guideId={guide.id} />
+          )}
         </Section>
       )}
 
