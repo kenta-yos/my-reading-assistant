@@ -49,6 +49,7 @@ export default function RecommendButton({ guideId }: { guideId: string }) {
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
   const percent = useAnimatedPercent(step)
+  const scrollYRef = useRef(0)
 
   const loading = step !== 'idle' || isPending
 
@@ -94,7 +95,7 @@ export default function RecommendButton({ guideId }: { guideId: string }) {
               return
             } else if (eventType === 'done') {
               setStep('done')
-              // startTransition で refresh 完了を待つ
+              scrollYRef.current = window.scrollY
               startTransition(() => {
                 router.refresh()
               })
@@ -109,9 +110,10 @@ export default function RecommendButton({ guideId }: { guideId: string }) {
     }
   }
 
-  // refresh 完了後にリセット
+  // refresh 完了後にスクロール位置を復元してリセット
   useEffect(() => {
     if (step === 'done' && !isPending) {
+      window.scrollTo(0, scrollYRef.current)
       setStep('idle')
     }
   }, [step, isPending])

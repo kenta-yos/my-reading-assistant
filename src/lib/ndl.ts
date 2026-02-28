@@ -105,10 +105,15 @@ export async function searchNdlByKeywords(
         `&maximumRecords=10` +
         `&recordSchema=dcndl`
 
-      const res = await fetch(url, {
-        signal: AbortSignal.timeout(5000),
-      })
-      const xml = await res.text()
+      // タイムアウト時は1回リトライ
+      let xml: string
+      try {
+        const res = await fetch(url, { signal: AbortSignal.timeout(8000) })
+        xml = await res.text()
+      } catch {
+        const res = await fetch(url, { signal: AbortSignal.timeout(8000) })
+        xml = await res.text()
+      }
       const books = parseRecords(xml)
 
       return books.map(book => ({ ...book, searchIntent: intent }))
