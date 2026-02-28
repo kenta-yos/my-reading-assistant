@@ -193,7 +193,7 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
   let responseText: string
   try {
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-2.5-flash',
       systemInstruction: systemPrompt,
       generationConfig: { temperature: 0.2 },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

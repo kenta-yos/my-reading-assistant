@@ -5,7 +5,7 @@ import { searchNdlByKeywords, NdlSearchQuery, NdlCandidate } from '@/lib/ndl'
 
 export const maxDuration = 60
 
-// gemini-2.0-flash は 1500 RPD なので日次制限チェック不要
+// 課金プランのため日次制限は緩い（RPD上限なし相当）
 
 function isQuotaError(error: unknown): boolean {
   if (!(error instanceof Error)) return false
@@ -35,11 +35,13 @@ async function selectRelevantBooks(
   }))
 
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     generationConfig: {
       responseMimeType: 'application/json',
       temperature: 0.2,
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    tools: [{ googleSearch: {} } as any],
   })
 
   const prompt = `あなたは読書アドバイザーです。ユーザーが「${bookTitle}」を読もうとしています。
@@ -51,7 +53,10 @@ ${summary}
 
 ${JSON.stringify(numbered, null, 2)}
 
-この中から「入門書」を必ず2冊、「発展書」を必ず2冊、合計4冊選んでください。
+■ あなたのタスク
+1. まずGoogle検索を使い、「${bookTitle}」の内容・テーマ・著者の主張を正確に把握せよ。
+2. 次に、候補リストの中で知らない本・判断に迷う本があればGoogle検索で内容を確認せよ。
+3. その上で「入門書」を必ず2冊、「発展書」を必ず2冊、合計4冊選べ。
 
 ■ カテゴリの定義
 - 入門（入門書）: 「${bookTitle}」を読む前に前提知識を補える教科書・入門書・新書。その分野の基礎を平易に解説しているもの。
@@ -61,6 +66,7 @@ ${JSON.stringify(numbered, null, 2)}
 - 対象書籍「${bookTitle}」のテーマと直接関連する本を最優先せよ。
 - 分野全般の概論より、対象書籍が扱う具体的なテーマに即した本を選べ。
 - 各候補の searchIntent を参考にし、その意図に合ったカテゴリ（入門 or 発展）に分類せよ。
+- 候補の内容が不明な場合はGoogle検索で確認し、的外れな本を選ばないこと。
 
 ■ その他の優先基準
 - 同程度の候補なら出版年が新しい方を優先せよ。ただし分野の古典的名著は例外として許容する。
@@ -76,7 +82,7 @@ ${JSON.stringify(numbered, null, 2)}
 注意：
 - index は上記リストの index をそのまま使うこと
 - category は必ず "入門" または "発展" のどちらかにすること
-- reason は具体的に書くこと（「関連がある」だけでは不十分）
+- reason は具体的に書くこと（「関連がある」だけでは不十分。Google検索で確認した内容に基づき、なぜこの本がこの対象書籍の入門/発展として適切かを述べよ）
 - 明らかに無関係な本は選ばないこと`
 
   const response = await model.generateContent(prompt)
