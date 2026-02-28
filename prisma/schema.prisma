@@ -17,8 +17,6 @@ model Guide {
   inputValue        String
   summary           String    @db.Text
   prerequisites     Json
-  bookmarked        Boolean   @default(false)
-  scheduledDeleteAt DateTime?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 }

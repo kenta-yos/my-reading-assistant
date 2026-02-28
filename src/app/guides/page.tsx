@@ -17,7 +17,6 @@ export default async function GuidesPage() {
       inputValue: true,
       summary: true,
       createdAt: true,
-      bookmarked: true,
     },
   })
 

@@ -29,7 +29,6 @@ export default async function Home() {
         inputValue: true,
         summary: true,
         createdAt: true,
-        bookmarked: true,
       },
     }),
     prisma.apiUsage.findUnique({ where: { date: getTodayJST() } }),
@@ -120,6 +119,24 @@ export default async function Home() {
           </div>
         </section>
       )}
+      {/* 応援カード */}
+      <section className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-6 text-center dark:border-indigo-900/30 dark:from-indigo-950/20 dark:to-stone-900 sm:p-8">
+        <p className="text-base font-semibold text-stone-800 dark:text-stone-200">
+          Lukaを気に入っていただけましたか？
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-stone-600 dark:text-stone-400">
+          サービスの運営にはAIのAPI利用料がかかっています。<br />
+          もしLukaが役に立ったら、応援していただけるととても嬉しいです。
+        </p>
+        <a
+          href="https://ofuse.me/bdd35efd"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 inline-block rounded-full bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+        >
+          コーヒー1杯分の応援をする
+        </a>
+      </section>
     </div>
   )
 }

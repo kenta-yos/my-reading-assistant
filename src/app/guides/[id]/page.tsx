@@ -2,7 +2,6 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import DeleteButton from './DeleteButton'
-import BookmarkButton from '@/components/BookmarkButton'
 import SectionNav from '@/components/SectionNav'
 import RecommendButton from '@/components/RecommendButton'
 import ShareButton from '@/components/ShareButton'
@@ -116,7 +115,6 @@ export default async function GuidePage({
             </div>
             <div className="flex flex-shrink-0 items-center gap-2">
               <ShareButton title={guide.title} />
-              <BookmarkButton id={guide.id} bookmarked={guide.bookmarked} />
               <DeleteButton id={guide.id} />
             </div>
           </div>
