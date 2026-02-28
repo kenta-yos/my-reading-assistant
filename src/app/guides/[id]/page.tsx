@@ -5,6 +5,7 @@ import DeleteButton from './DeleteButton'
 import BookmarkButton from '@/components/BookmarkButton'
 import SectionNav from '@/components/SectionNav'
 import RecommendButton from '@/components/RecommendButton'
+import ShareButton from '@/components/ShareButton'
 
 type Prerequisites = {
   // 判断フェーズ
@@ -33,6 +34,7 @@ type Prerequisites = {
     category?: '入門' | '発展'
   }[]
   ndlSearchQueries?: { keywords: string[]; intent: string }[]
+  bookMetadata?: { authors?: string[]; publisher?: string; year?: string }
 }
 
 // 新5段階
@@ -113,6 +115,7 @@ export default async function GuidePage({
               )}
             </div>
             <div className="flex flex-shrink-0 items-center gap-2">
+              <ShareButton title={guide.title} />
               <BookmarkButton id={guide.id} bookmarked={guide.bookmarked} />
               <DeleteButton id={guide.id} />
             </div>
@@ -121,7 +124,28 @@ export default async function GuidePage({
           <h1 className="text-xl font-bold text-stone-950 dark:text-stone-50 sm:text-2xl">
             {guide.title}
           </h1>
-          {guide.inputValue !== guide.title && (
+          {prereqs?.bookMetadata && (
+            <div className="mt-2 space-y-1">
+              {prereqs.bookMetadata.authors?.length ? (
+                <p className="text-sm text-stone-600 dark:text-stone-300">
+                  {prereqs.bookMetadata.authors.join('、')}
+                </p>
+              ) : null}
+              <div className="flex flex-wrap gap-1.5">
+                {prereqs.bookMetadata.publisher && (
+                  <span className="inline-block rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-600 dark:bg-stone-700 dark:text-stone-300">
+                    {prereqs.bookMetadata.publisher}
+                  </span>
+                )}
+                {prereqs.bookMetadata.year && (
+                  <span className="inline-block rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-600 dark:bg-stone-700 dark:text-stone-300">
+                    {prereqs.bookMetadata.year}年
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+          {!prereqs?.bookMetadata && guide.inputValue !== guide.title && (
             <p className="mt-1 truncate text-sm text-stone-400">{guide.inputValue}</p>
           )}
 

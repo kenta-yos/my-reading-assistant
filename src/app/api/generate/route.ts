@@ -271,13 +271,24 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
   // 期限切れガイドを非同期でクリーンアップ（失敗しても無視）
   cleanupExpiredGuides().catch(() => {})
 
+  // 書籍メタデータを prerequisites に保存
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const prereqs = (guideData.prerequisites ?? {}) as any
+  if (bookMetadata) {
+    prereqs.bookMetadata = {
+      authors: bookMetadata.authors,
+      publisher: bookMetadata.publisher,
+      year: bookMetadata.year,
+    }
+  }
+
   const guide = await prisma.guide.create({
     data: {
       title: guideData.title || inputValue,
       inputType,
       inputValue,
       summary: guideData.summary || '',
-      prerequisites: guideData.prerequisites ?? {},
+      prerequisites: prereqs,
     },
   })
 
