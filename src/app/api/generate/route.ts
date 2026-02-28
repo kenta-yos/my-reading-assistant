@@ -46,20 +46,41 @@ function extractTextFromHtml(html: string): string {
     .slice(0, 20000)
 }
 
+// Google検索グラウンディングの引用マーカーを除去
+function stripCitations(obj: unknown): unknown {
+  if (typeof obj === 'string') {
+    return obj
+      .replace(/\s*\[\d+(?:,\s*\d+)*\]\s*$/g, '')  // 末尾の [2, 4, 7] 形式
+      .replace(/\[\d+\]/g, '')                        // 文中の [1] 形式
+      .trim()
+  }
+  if (Array.isArray(obj)) return obj.map(stripCitations)
+  if (obj && typeof obj === 'object') {
+    return Object.fromEntries(
+      Object.entries(obj).map(([k, v]) => [k, stripCitations(v)])
+    )
+  }
+  return obj
+}
+
 function parseJsonResponse(text: string): object {
+  let parsed: object
   try {
-    return JSON.parse(text)
+    parsed = JSON.parse(text)
   } catch {
     const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/)
     if (codeBlockMatch) {
-      return JSON.parse(codeBlockMatch[1].trim())
+      parsed = JSON.parse(codeBlockMatch[1].trim())
+    } else {
+      const jsonMatch = text.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        parsed = JSON.parse(jsonMatch[0])
+      } else {
+        throw new Error('JSONの解析に失敗しました')
+      }
     }
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0])
-    }
-    throw new Error('JSONの解析に失敗しました')
   }
+  return stripCitations(parsed) as object
 }
 
 export async function POST(request: NextRequest) {

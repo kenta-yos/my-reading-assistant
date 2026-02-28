@@ -87,7 +87,16 @@ ${JSON.stringify(numbered, null, 2)}
 
   const response = await model.generateContent(prompt)
   const text = response.response.text()
-  const selections = JSON.parse(text) as { index: number; reason: string; category: '入門' | '発展' }[]
+  const raw = JSON.parse(text) as { index: number; reason: string; category: '入門' | '発展' }[]
+
+  // Google検索グラウンディングの引用マーカーを除去
+  const selections = raw.map(s => ({
+    ...s,
+    reason: s.reason
+      .replace(/\s*\[\d+(?:,\s*\d+)*\]\s*$/g, '')
+      .replace(/\[\d+\]/g, '')
+      .trim(),
+  }))
 
   return selections
     .filter(s => s.index >= 0 && s.index < candidates.length)
