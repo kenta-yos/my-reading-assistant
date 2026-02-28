@@ -58,14 +58,16 @@ export default function RootLayout({
         <main className="mx-auto max-w-3xl px-4 py-8 sm:py-12">{children}</main>
         <footer className="border-t border-stone-200/80 dark:border-stone-800/80">
           <div className="mx-auto max-w-3xl px-4 py-6 text-center">
-            <p className="text-xs text-stone-400 dark:text-stone-500">
-              Lukaが役に立ったら応援してください
+            <p className="text-xs leading-relaxed text-stone-400 dark:text-stone-500">
+              サービスの運営にはAIのAPI利用料がかかっています。<br />
+              もしLukaが役に立ったら、応援していただけるととても嬉しいです。<br />
+              いただいたサポートは、すべてサービスの維持・改善に使わせていただきます。
             </p>
             <a
               href="https://ofuse.me/bdd35efd"
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 inline-block rounded-full bg-indigo-50 px-4 py-1.5 text-sm font-medium text-indigo-600 transition hover:bg-indigo-100 dark:bg-indigo-950/30 dark:text-indigo-400 dark:hover:bg-indigo-950/50"
+              className="mt-3 inline-block rounded-full bg-indigo-50 px-5 py-2 text-sm font-medium text-indigo-600 transition hover:bg-indigo-100 dark:bg-indigo-950/30 dark:text-indigo-400 dark:hover:bg-indigo-950/50"
             >
               OFUSEで応援する
             </a>
