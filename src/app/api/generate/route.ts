@@ -99,13 +99,6 @@ export async function POST(request: NextRequest) {
       { status: 429 }
     )
   }
-
-  // カウントをインクリメント（存在しなければ作成）
-  await prisma.apiUsage.upsert({
-    where: { date: today },
-    create: { date: today, count: 1 },
-    update: { count: { increment: 1 } },
-  })
   // ──────────────────────────────────────────────────────
 
   let contentContext = ''
@@ -240,6 +233,13 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
       { status: 500 }
     )
   }
+
+  // 成功時のみカウントをインクリメント
+  await prisma.apiUsage.upsert({
+    where: { date: today },
+    create: { date: today, count: 1 },
+    update: { count: { increment: 1 } },
+  })
 
   // 期限切れガイドを非同期でクリーンアップ（失敗しても無視）
   cleanupExpiredGuides().catch(() => {})

@@ -126,12 +126,6 @@ export async function POST(
       { status: 429 }
     )
   }
-
-  await prisma.apiUsage.upsert({
-    where: { date: today },
-    create: { date: today, count: 1 },
-    update: { count: { increment: 1 } },
-  })
   // ──────────────────────────────────────────────────────
 
   const guide = await prisma.guide.findUnique({ where: { id } })
@@ -159,6 +153,13 @@ export async function POST(
       guide.summary || '',
       genAI
     )
+
+    // 成功時のみカウントをインクリメント
+    await prisma.apiUsage.upsert({
+      where: { date: today },
+      create: { date: today, count: 1 },
+      update: { count: { increment: 1 } },
+    })
 
     // ガイドの prerequisites を更新
     const updatedPrereqs = { ...prereqs, recommendedResources }
