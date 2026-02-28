@@ -171,7 +171,7 @@ export async function POST(
   } catch (error) {
     if (isQuotaError(error)) {
       return NextResponse.json(
-        { error: 'Gemini API のレート制限に達しました。1分ほど待ってから再度お試しください。' },
+        { error: 'Gemini API の利用制限に達しました。2〜3分ほど待ってから再度お試しください。' },
         { status: 429 }
       )
     }

@@ -213,7 +213,7 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
       return NextResponse.json(
         {
           error:
-            'Gemini API のレート制限に達しました。1分ほど待ってから再度お試しください。',
+            'Gemini API の利用制限に達しました。2〜3分ほど待ってから再度お試しください。',
         },
         { status: 429 }
       )
