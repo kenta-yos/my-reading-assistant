@@ -78,16 +78,6 @@ async function selectRelevantBooks(
     searchIntent: c.searchIntent,
   }))
 
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-2.5-flash',
-    generationConfig: {
-      responseMimeType: 'application/json',
-      temperature: 0.2,
-      // @ts-expect-error -- thinkingConfig is supported by the API but not yet in the SDK types
-      thinkingConfig: { thinkingBudget: 0 },
-    },
-  })
-
   const prompt = `あなたは読書アドバイザーです。ユーザーが「${bookTitle}」を読もうとしています。
 
 ■ この本の概要
@@ -125,8 +115,28 @@ ${JSON.stringify(numbered, null, 2)}
 - reason は具体的に書くこと（「関連がある」だけでは不十分）
 - 明らかに無関係な本は選ばないこと`
 
-  const response = await model.generateContent(prompt)
-  const text = response.response.text()
+  // SDK が thinkingConfig 未対応のため REST API を直接呼び出す
+  const apiKey = process.env.GEMINI_API_KEY!
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseMimeType: 'application/json',
+          temperature: 0.2,
+          thinkingConfig: { thinkingBudget: 0 },
+        },
+      }),
+    }
+  )
+  if (!res.ok) {
+    throw new Error(`Gemini API error: ${res.status} ${await res.text()}`)
+  }
+  const json = await res.json()
+  const text = json.candidates?.[0]?.content?.parts?.find((p: { text?: string }) => p.text)?.text ?? '[]'
   const parsed = parseJsonResponse(text)
   const selections = (Array.isArray(parsed) ? parsed : []) as { index: number; reason: string; category: '入門' | '発展' }[]
 
