@@ -138,10 +138,10 @@ export default function GuideForm() {
       }
 
       const data = await res.json()
+      // ページ遷移でアンマウントされるので loading は解除しない
       router.push(`/guides/${data.id}`)
     } catch {
       setError('ネットワークエラーが発生しました。通信状況を確認してください。')
-    } finally {
       setIsLoading(false)
     }
   }

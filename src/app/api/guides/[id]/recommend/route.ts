@@ -104,7 +104,15 @@ ${JSON.stringify(numbered, null, 2)}
       .trim(),
   }))
 
-  return selections
+  // 同じ候補が複数回選ばれた場合は最初の1つだけ残す
+  const seenIndices = new Set<number>()
+  const unique = selections.filter(s => {
+    if (seenIndices.has(s.index)) return false
+    seenIndices.add(s.index)
+    return true
+  })
+
+  return unique
     .filter(s => s.index >= 0 && s.index < candidates.length)
     .filter(s => s.category === '入門' || s.category === '発展')
     .slice(0, 6)
