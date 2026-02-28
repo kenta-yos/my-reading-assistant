@@ -36,10 +36,7 @@ async function selectRelevantBooks(
 
   const model = genAI.getGenerativeModel({
     model: 'gemini-2.5-flash',
-    generationConfig: {
-      responseMimeType: 'application/json',
-      temperature: 0.2,
-    },
+    generationConfig: { temperature: 0.2 },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     tools: [{ googleSearch: {} } as any],
   })
@@ -83,11 +80,22 @@ ${JSON.stringify(numbered, null, 2)}
 - index は上記リストの index をそのまま使うこと
 - category は必ず "入門" または "発展" のどちらかにすること
 - reason は具体的に書くこと（「関連がある」だけでは不十分。Google検索で確認した内容に基づき、なぜこの本がこの対象書籍の入門/発展として適切かを述べよ）
-- 明らかに無関係な本は選ばないこと`
+- 明らかに無関係な本は選ばないこと
+- 必ずJSON配列のみを返すこと。コードブロック記法や追加テキストは含めないこと`
 
   const response = await model.generateContent(prompt)
   const text = response.response.text()
-  const raw = JSON.parse(text) as { index: number; reason: string; category: '入門' | '発展' }[]
+
+  // JSON配列を抽出（コードブロックやテキストが混入する場合に対応）
+  let jsonText = text
+  const codeBlock = text.match(/```(?:json)?\s*([\s\S]*?)```/)
+  if (codeBlock) {
+    jsonText = codeBlock[1].trim()
+  } else {
+    const arrayMatch = text.match(/\[[\s\S]*\]/)
+    if (arrayMatch) jsonText = arrayMatch[0]
+  }
+  const raw = JSON.parse(jsonText) as { index: number; reason: string; category: '入門' | '発展' }[]
 
   // Google検索グラウンディングの引用マーカーを除去
   const selections = raw.map(s => ({
