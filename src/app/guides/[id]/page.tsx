@@ -498,11 +498,18 @@ function BookCard({ book, accent }: { book: Prerequisites['recommendedResources'
         <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">
           {book.author}
         </p>
-        <p className="mt-0.5 text-sm text-stone-500 dark:text-stone-400">
-          {[book.publisher, book.year ? `${book.year}年` : '']
-            .filter(Boolean)
-            .join(' / ')}
-        </p>
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {book.publisher && (
+            <span className="inline-block rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-600 dark:bg-stone-700 dark:text-stone-300">
+              {book.publisher}
+            </span>
+          )}
+          {book.year && (
+            <span className="inline-block rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-600 dark:bg-stone-700 dark:text-stone-300">
+              {book.year}年
+            </span>
+          )}
+        </div>
         {book.reason && (
           <p className="mt-2 text-sm leading-relaxed text-stone-700 dark:text-stone-300">
             {book.reason}
