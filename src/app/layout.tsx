@@ -69,7 +69,7 @@ export default function RootLayout({
               rel="noopener noreferrer"
               className="mt-3 inline-block rounded-full bg-indigo-50 px-5 py-2 text-sm font-medium text-indigo-600 transition hover:bg-indigo-100 dark:bg-indigo-950/30 dark:text-indigo-400 dark:hover:bg-indigo-950/50"
             >
-              OFUSEで応援する
+              コーヒー1杯分の応援をする
             </a>
           </div>
         </footer>
