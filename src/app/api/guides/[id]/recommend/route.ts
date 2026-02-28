@@ -1,11 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { prisma } from '@/lib/prisma'
 import { searchNdlByKeywords, NdlSearchQuery, NdlCandidate } from '@/lib/ndl'
 
 export const maxDuration = 60
-
-// 課金プランのため日次制限は緩い（RPD上限なし相当）
 
 function isQuotaError(error: unknown): boolean {
   if (!(error instanceof Error)) return false
@@ -130,53 +128,89 @@ export async function POST(
 ) {
   const { id } = await params
 
-  if (!process.env.GEMINI_API_KEY) {
-    return NextResponse.json({ error: 'GEMINI_API_KEY が設定されていません' }, { status: 500 })
-  }
+  // SSE ストリームで進捗を返す
+  const encoder = new TextEncoder()
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send = (event: string, data: unknown) => {
+        controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`))
+      }
 
-  const guide = await prisma.guide.findUnique({ where: { id } })
-  if (!guide) {
-    return NextResponse.json({ error: 'ガイドが見つかりません' }, { status: 404 })
-  }
+      try {
+        if (!process.env.GEMINI_API_KEY) {
+          send('error', { error: 'GEMINI_API_KEY が設定されていません' })
+          controller.close()
+          return
+        }
 
-  const prereqs = guide.prerequisites as Record<string, unknown> | undefined
-  const queries = prereqs?.ndlSearchQueries as NdlSearchQuery[] | undefined
+        send('progress', { step: 'loading', message: 'ガイド情報を読み込み中…' })
 
-  if (!queries?.length) {
-    return NextResponse.json({ error: '検索クエリがありません' }, { status: 400 })
-  }
+        const guide = await prisma.guide.findUnique({ where: { id } })
+        if (!guide) {
+          send('error', { error: 'ガイドが見つかりません' })
+          controller.close()
+          return
+        }
 
-  try {
-    const candidates = await searchNdlByKeywords(queries)
-    if (candidates.length === 0) {
-      return NextResponse.json({ error: 'NDL から候補書籍が見つかりませんでした' }, { status: 404 })
-    }
+        const prereqs = guide.prerequisites as Record<string, unknown> | undefined
+        const queries = prereqs?.ndlSearchQueries as NdlSearchQuery[] | undefined
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-    const recommendedResources = await selectRelevantBooks(
-      candidates,
-      guide.title,
-      guide.summary || '',
-      genAI
-    )
+        if (!queries?.length) {
+          send('error', { error: '検索クエリがありません' })
+          controller.close()
+          return
+        }
 
-    // ガイドの prerequisites を更新
-    const updatedPrereqs = { ...prereqs, recommendedResources }
-    await prisma.guide.update({
-      where: { id },
-      data: { prerequisites: updatedPrereqs },
-    })
+        // Step 1: NDL検索
+        send('progress', { step: 'ndl', message: '国立国会図書館を検索中…' })
+        const candidates = await searchNdlByKeywords(queries)
 
-    return NextResponse.json({ recommendedResources })
-  } catch (error) {
-    if (isQuotaError(error)) {
-      return NextResponse.json(
-        { error: 'Gemini API の利用制限に達しました。2〜3分ほど待ってから再度お試しください。' },
-        { status: 429 }
-      )
-    }
-    console.error('[recommend] failed:', error)
-    const message = error instanceof Error ? error.message : '不明なエラー'
-    return NextResponse.json({ error: `推薦エラー: ${message}` }, { status: 500 })
-  }
+        if (candidates.length === 0) {
+          send('error', { error: 'NDL から候補書籍が見つかりませんでした' })
+          controller.close()
+          return
+        }
+
+        send('progress', { step: 'ndl_done', message: `${candidates.length}件の候補を取得しました` })
+
+        // Step 2: AI選書
+        send('progress', { step: 'ai', message: 'AIが候補を評価中…' })
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+        const recommendedResources = await selectRelevantBooks(
+          candidates,
+          guide.title,
+          guide.summary || '',
+          genAI
+        )
+
+        // DB更新
+        send('progress', { step: 'saving', message: '結果を保存中…' })
+        const updatedPrereqs = { ...prereqs, recommendedResources }
+        await prisma.guide.update({
+          where: { id },
+          data: { prerequisites: updatedPrereqs },
+        })
+
+        send('done', { recommendedResources })
+        controller.close()
+      } catch (error) {
+        if (isQuotaError(error)) {
+          send('error', { error: 'Gemini API の利用制限に達しました。2〜3分ほど待ってから再度お試しください。' })
+        } else {
+          console.error('[recommend] failed:', error)
+          const message = error instanceof Error ? error.message : '不明なエラー'
+          send('error', { error: `推薦エラー: ${message}` })
+        }
+        controller.close()
+      }
+    },
+  })
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    },
+  })
 }
