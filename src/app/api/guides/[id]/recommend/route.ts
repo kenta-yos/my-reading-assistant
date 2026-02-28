@@ -162,7 +162,7 @@ export async function POST(
         }
 
         // Step 1: NDL検索
-        send('progress', { step: 'ndl', message: '国立国会図書館を検索中…' })
+        send('progress', { step: 'ndl', message: '関連書籍を探しています…' })
         const candidates = await searchNdlByKeywords(queries)
 
         if (candidates.length === 0) {
@@ -171,7 +171,7 @@ export async function POST(
           return
         }
 
-        send('progress', { step: 'ndl_done', message: `${candidates.length}件の候補を取得しました` })
+        send('progress', { step: 'ndl_done', message: `${candidates.length}冊の候補が見つかりました` })
 
         // Step 2: AI選書
         send('progress', { step: 'ai', message: 'AIが候補を評価中…' })

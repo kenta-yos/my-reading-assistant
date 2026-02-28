@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation'
 
 const STEP_LABELS: Record<string, string> = {
   loading: 'ガイド情報を読み込み中…',
-  ndl: '国立国会図書館を検索中…',
-  ndl_done: '候補を取得しました',
+  ndl: '関連書籍を探しています…',
+  ndl_done: '候補が見つかりました',
   ai: 'AIが候補を評価中…',
   saving: '結果を保存中…',
 }
