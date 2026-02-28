@@ -115,23 +115,33 @@ export async function searchNdlByKeywords(
     })
   )
 
-  const candidates: NdlCandidate[] = []
+  // 全候補を収集
+  const all: NdlCandidate[] = []
   const seenIsbns = new Set<string>()
-  const seenTitles = new Set<string>()
 
   for (const result of results) {
     if (result.status !== 'fulfilled') continue
     for (const book of result.value) {
-      if (book.isbn) {
-        if (seenIsbns.has(book.isbn)) continue
-        seenIsbns.add(book.isbn)
-      } else {
-        if (seenTitles.has(book.title)) continue
-      }
-      seenTitles.add(book.title)
-      candidates.push(book)
+      if (book.isbn && seenIsbns.has(book.isbn)) continue
+      if (book.isbn) seenIsbns.add(book.isbn)
+      all.push(book)
     }
   }
 
-  return candidates
+  // 版違い（同一タイトル・同一出版社）を最新版のみに絞る
+  const normalizeTitle = (t: string) =>
+    t.replace(/[=＝:：].*/g, '')       // サブタイトル除去
+     .replace(/\s+/g, '')              // 空白除去
+     .replace(/[第新改訂増補版]+版$/g, '') // 「第2版」「新版」等を除去
+
+  const editionMap = new Map<string, NdlCandidate>()
+  for (const book of all) {
+    const key = `${normalizeTitle(book.title)}__${book.publisher}`
+    const existing = editionMap.get(key)
+    if (!existing || (book.year || '') > (existing.year || '')) {
+      editionMap.set(key, book)
+    }
+  }
+
+  return Array.from(editionMap.values())
 }
