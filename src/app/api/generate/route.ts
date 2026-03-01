@@ -219,6 +219,8 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
   // ── Gemini API 呼び出し ────────────────────────────────
   let responseText: string
   let debugParts: string[] = []
+  let debugCandidateCount = 0
+  let debugFinishReason = 'unknown'
   try {
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
@@ -248,7 +250,9 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
       )
     }
 
-    // parts の構造を記録（デバッグ用）
+    // デバッグ情報を記録
+    debugCandidateCount = response.candidates?.length ?? 0
+    debugFinishReason = finishReason ?? 'none'
     if (candidate?.content?.parts) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       debugParts = candidate.content.parts.map((p: any) => Object.keys(p).join(','))
@@ -279,7 +283,7 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
 
   if (!responseText) {
     return NextResponse.json(
-      { error: `AIからの応答が空でした。別のURLまたはタイトルでお試しください。[parts: ${debugParts.join(' | ')}]` },
+      { error: `AIからの応答が空でした。別のURLまたはタイトルでお試しください。[candidates: ${debugCandidateCount}, finish: ${debugFinishReason}, parts: ${debugParts.join(' | ') || 'none'}]` },
       { status: 500 }
     )
   }
