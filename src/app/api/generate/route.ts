@@ -227,7 +227,27 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
       tools: [{ googleSearch: {} } as any],
     })
     const aiResponse = await model.generateContent(userPrompt)
-    responseText = aiResponse.response.text()
+    const response = aiResponse.response
+
+    // 安全フィルタでブロックされた場合
+    const blockReason = response.promptFeedback?.blockReason
+    if (blockReason) {
+      return NextResponse.json(
+        { error: `コンテンツがブロックされました（${blockReason}）。別のURLまたはタイトルでお試しください。` },
+        { status: 400 }
+      )
+    }
+
+    const candidate = response.candidates?.[0]
+    const finishReason = candidate?.finishReason
+    if (finishReason && finishReason !== 'STOP' && finishReason !== 'MAX_TOKENS') {
+      return NextResponse.json(
+        { error: `AIの応答が中断されました（${finishReason}）。別のURLまたはタイトルでお試しください。` },
+        { status: 400 }
+      )
+    }
+
+    responseText = response.text()
   } catch (error) {
     if (isQuotaError(error)) {
       return NextResponse.json(
@@ -244,7 +264,7 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
   // ──────────────────────────────────────────────────────
 
   if (!responseText) {
-    return NextResponse.json({ error: 'AIからの応答が取得できませんでした' }, { status: 500 })
+    return NextResponse.json({ error: 'AIからの応答が空でした。別のURLまたはタイトルでお試しください。' }, { status: 500 })
   }
 
   let guideData: {
