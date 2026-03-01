@@ -218,6 +218,7 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
 
   // ── Gemini API 呼び出し ────────────────────────────────
   let responseText: string
+  let debugParts: string[] = []
   try {
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
@@ -247,7 +248,20 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
       )
     }
 
+    // parts の構造を記録（デバッグ用）
+    if (candidate?.content?.parts) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      debugParts = candidate.content.parts.map((p: any) => Object.keys(p).join(','))
+    }
+
+    // text() が空の場合、parts から直接テキストを抽出
     responseText = response.text()
+    if (!responseText && candidate?.content?.parts) {
+      responseText = candidate.content.parts
+        .filter((p: { text?: string }) => typeof p.text === 'string')
+        .map((p: { text?: string }) => p.text)
+        .join('')
+    }
   } catch (error) {
     if (isQuotaError(error)) {
       return NextResponse.json(
@@ -264,7 +278,10 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
   // ──────────────────────────────────────────────────────
 
   if (!responseText) {
-    return NextResponse.json({ error: 'AIからの応答が空でした。別のURLまたはタイトルでお試しください。' }, { status: 500 })
+    return NextResponse.json(
+      { error: `AIからの応答が空でした。別のURLまたはタイトルでお試しください。[parts: ${debugParts.join(' | ')}]` },
+      { status: 500 }
+    )
   }
 
   let guideData: {
