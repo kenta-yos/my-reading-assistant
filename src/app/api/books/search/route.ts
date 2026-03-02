@@ -1,31 +1,224 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { type BookResult, parseRecords } from '@/lib/ndl'
+import { NextResponse } from 'next/server'
 
-export type BookCandidate = BookResult & { id: string }
+export type Candidate = {
+  title: string
+  author: string
+  publisherName: string
+  publishedYear: number | null
+  pages: number | null
+  description: string | null
+  thumbnail: string | null
+  isbn: string | null
+}
 
-export async function GET(request: NextRequest) {
-  const q = request.nextUrl.searchParams.get('q') ?? ''
-  if (q.length < 2) return NextResponse.json([])
-
-  const query = `title%3D${encodeURIComponent(`"${q}"`)}`
-  const url =
-    `https://ndlsearch.ndl.go.jp/api/sru` +
-    `?operation=searchRetrieve` +
-    `&query=${query}` +
-    `&maximumRecords=15` +
-    `&recordSchema=dcndl`
-
-  try {
-    const res = await fetch(url, {
-      signal: AbortSignal.timeout(8000),
-    })
-    const xml = await res.text()
-    const books: BookCandidate[] = parseRecords(xml).map((b, i) => ({
-      ...b,
-      id: String(i),
-    }))
-    return NextResponse.json(books.slice(0, 8))
-  } catch {
-    return NextResponse.json([], { status: 200 })
+type GoogleBooksVolume = {
+  volumeInfo?: {
+    title?: string
+    authors?: string[]
+    publisher?: string
+    publishedDate?: string
+    pageCount?: number
+    description?: string
+    industryIdentifiers?: { type: string; identifier: string }[]
+    imageLinks?: { smallThumbnail?: string; thumbnail?: string }
+    language?: string
   }
+}
+
+function extractYear(date: string | undefined): number | null {
+  if (!date) return null
+  const match = date.match(/(\d{4})/)
+  return match ? parseInt(match[1]) : null
+}
+
+function extractIsbn(
+  identifiers: { type: string; identifier: string }[] | undefined,
+): string | null {
+  if (!identifiers) return null
+  const isbn13 = identifiers.find((id) => id.type === 'ISBN_13')
+  const isbn10 = identifiers.find((id) => id.type === 'ISBN_10')
+  return isbn13?.identifier ?? isbn10?.identifier ?? null
+}
+
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url)
+  const q = searchParams.get('q')
+
+  if (!q || q.trim().length < 2) {
+    return NextResponse.json({ candidates: [] })
+  }
+
+  // ISBN検索の場合、Google Booksで見つからなければOpenBDでタイトルを取得して再検索
+  let searchQuery = q
+  const isbnMatch = q.match(/^isbn[:\s]*(\d{10,13})$/i)
+
+  if (isbnMatch) {
+    const isbn = isbnMatch[1]
+    const isbnUrl = new URL('https://www.googleapis.com/books/v1/volumes')
+    isbnUrl.searchParams.set('q', `isbn:${isbn}`)
+    isbnUrl.searchParams.set('maxResults', '5')
+    isbnUrl.searchParams.set('printType', 'books')
+    if (process.env.GOOGLE_BOOKS_API_KEY) {
+      isbnUrl.searchParams.set('key', process.env.GOOGLE_BOOKS_API_KEY)
+    }
+    const isbnRes = await fetch(isbnUrl.toString())
+    const isbnData = isbnRes.ok ? await isbnRes.json() : { items: [] }
+
+    if (!isbnData.items || isbnData.items.length === 0) {
+      try {
+        const obdRes = await fetch(`https://api.openbd.jp/v1/get?isbn=${isbn}`)
+        if (obdRes.ok) {
+          const obdData = await obdRes.json()
+          const title = obdData?.[0]?.summary?.title
+          if (title) {
+            searchQuery = title
+          }
+        }
+      } catch {
+        // OpenBDも失敗した場合はISBNのまま検索
+      }
+    }
+  }
+
+  // Google Books API
+  const url = new URL('https://www.googleapis.com/books/v1/volumes')
+  url.searchParams.set('q', searchQuery)
+  url.searchParams.set('maxResults', '20')
+  url.searchParams.set('printType', 'books')
+  if (process.env.GOOGLE_BOOKS_API_KEY) {
+    url.searchParams.set('key', process.env.GOOGLE_BOOKS_API_KEY)
+  }
+
+  const res = await fetch(url.toString())
+  if (!res.ok) {
+    return NextResponse.json({ candidates: [] })
+  }
+
+  const data = await res.json()
+  const items: GoogleBooksVolume[] = data.items ?? []
+
+  // 日本語書籍を判定
+  const isJapanese = (vol: GoogleBooksVolume['volumeInfo']) => {
+    if (!vol) return false
+    if (vol.language === 'ja') return true
+    const text = `${vol.title ?? ''}${vol.authors?.join('') ?? ''}${vol.publisher ?? ''}`
+    return /[\u3000-\u9FFF\uF900-\uFAFF]/.test(text)
+  }
+
+  // 日本語書籍を優先、同程度なら出版年が新しい順
+  const sorted = [...items].sort((a, b) => {
+    const aJa = isJapanese(a.volumeInfo) ? 0 : 1
+    const bJa = isJapanese(b.volumeInfo) ? 0 : 1
+    if (aJa !== bJa) return aJa - bJa
+    const aYear = extractYear(a.volumeInfo?.publishedDate) ?? 0
+    const bYear = extractYear(b.volumeInfo?.publishedDate) ?? 0
+    return bYear - aYear
+  })
+
+  // ISBN で重複排除しつつ候補を抽出（最大8件）
+  const candidates: Candidate[] = []
+  const candidateIsbns: (string | null)[] = []
+  const seenIsbns = new Set<string>()
+
+  for (const item of sorted) {
+    if (candidates.length >= 8) break
+    const vol = item.volumeInfo
+    if (!vol?.title) continue
+
+    const isbn = extractIsbn(vol.industryIdentifiers)
+    if (isbn) {
+      if (seenIsbns.has(isbn)) continue
+      seenIsbns.add(isbn)
+    }
+
+    const thumbnail =
+      vol.imageLinks?.thumbnail ?? vol.imageLinks?.smallThumbnail ?? null
+
+    candidates.push({
+      title: vol.title,
+      author: vol.authors?.join('／') ?? '',
+      publisherName: vol.publisher ?? '',
+      publishedYear: extractYear(vol.publishedDate),
+      pages: vol.pageCount && vol.pageCount > 0 ? vol.pageCount : null,
+      description: vol.description ?? null,
+      thumbnail: thumbnail ? thumbnail.replace(/^http:/, 'https:') : null,
+      isbn,
+    })
+    candidateIsbns.push(isbn)
+  }
+
+  if (candidates.length === 0) {
+    return NextResponse.json({ candidates: [] })
+  }
+
+  // OpenBD 補完
+  const validIsbns = candidateIsbns.filter(
+    (isbn): isbn is string => isbn !== null,
+  )
+
+  if (validIsbns.length > 0) {
+    try {
+      const openBDRes = await fetch(
+        `https://api.openbd.jp/v1/get?isbn=${validIsbns.join(',')}`,
+      )
+      if (openBDRes.ok) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const openBDData: Array<any | null> = await openBDRes.json()
+
+        const pagesMap: Record<string, number> = {}
+        const descMap: Record<string, string> = {}
+        const publisherMap: Record<string, string> = {}
+
+        for (const entry of openBDData) {
+          if (!entry) continue
+          const entryIsbn = entry.summary?.isbn
+          if (!entryIsbn) continue
+
+          if (entry.summary?.pages) {
+            const p = parseInt(entry.summary.pages, 10)
+            if (!isNaN(p) && p > 0) pagesMap[entryIsbn] = p
+          }
+
+          if (entry.summary?.publisher) {
+            publisherMap[entryIsbn] = entry.summary.publisher
+          }
+
+          const extents: Array<{
+            ExtentType?: string
+            ExtentValue?: string
+          }> = entry.onix?.DescriptiveDetail?.Extent ?? []
+          const pageExtent = extents.find((e) => e.ExtentType === '11')
+          if (pageExtent?.ExtentValue) {
+            const p = parseInt(pageExtent.ExtentValue, 10)
+            if (!isNaN(p) && p > 0 && !pagesMap[entryIsbn]) pagesMap[entryIsbn] = p
+          }
+
+          const textContents: Array<{ TextType?: string; Text?: string }> =
+            entry.onix?.CollateralDetail?.TextContent ?? []
+          const detailed = textContents.find((tc) => tc.TextType === '03')
+          const short = textContents.find((tc) => tc.TextType === '02')
+          const desc = detailed?.Text || short?.Text
+          if (desc) descMap[entryIsbn] = desc
+        }
+
+        for (let i = 0; i < candidates.length; i++) {
+          const isbn = candidateIsbns[i]
+          if (!isbn) continue
+          if (candidates[i].pages === null && pagesMap[isbn]) {
+            candidates[i].pages = pagesMap[isbn]
+          }
+          if (!candidates[i].publisherName && publisherMap[isbn]) {
+            candidates[i].publisherName = publisherMap[isbn]
+          }
+          if (descMap[isbn]) {
+            candidates[i].description = descMap[isbn]
+          }
+        }
+      }
+    } catch {
+      // OpenBD 失敗時はそのまま返す
+    }
+  }
+
+  return NextResponse.json({ candidates })
 }
