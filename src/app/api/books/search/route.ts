@@ -105,6 +105,32 @@ async function searchNdl(query: string, isIsbn: boolean): Promise<Candidate[]> {
   }
 }
 
+// --- 重複判定ヘルパー ---
+
+/** ISBN-10 → ISBN-13 に正規化（比較用） */
+function normalizeIsbn(isbn: string): string {
+  const cleaned = isbn.replace(/[^0-9X]/gi, '')
+  if (cleaned.length === 13) return cleaned
+  if (cleaned.length === 10) {
+    const base = '978' + cleaned.slice(0, 9)
+    let sum = 0
+    for (let i = 0; i < 12; i++) sum += parseInt(base[i]) * (i % 2 === 0 ? 1 : 3)
+    const check = (10 - (sum % 10)) % 10
+    return base + check
+  }
+  return cleaned
+}
+
+/** タイトルを正規化して比較用キーを生成 */
+function normalizeTitle(title: string): string {
+  return title
+    .replace(/[\s\u3000]+/g, '')          // 空白除去
+    .replace(/[（(].*?[）)]/g, '')         // 括弧内除去
+    .replace(/[=＝:：].*/g, '')            // サブタイトル除去
+    .replace(/[第新改訂増補版]+版$/g, '')   // 版表記除去
+    .toLowerCase()
+}
+
 // --- 日本語判定 ---
 
 function isJapaneseCandidate(c: Candidate): boolean {
@@ -233,15 +259,23 @@ export async function GET(req: Request) {
     })
   }
 
-  // --- マージ: Google 候補を先に、NDL 候補を追加（ISBN重複はGoogle優先） ---
+  // --- マージ: Google 候補を先に、NDL 候補を追加（ISBN・タイトル重複はGoogle優先） ---
   const mergedCandidates: Candidate[] = [...googleCandidates]
-  const mergedIsbns = new Set(
-    googleCandidates.map((c) => c.isbn).filter((isbn): isbn is string => isbn !== null),
+  const mergedNormalizedIsbns = new Set(
+    googleCandidates
+      .map((c) => c.isbn)
+      .filter((isbn): isbn is string => isbn !== null)
+      .map(normalizeIsbn),
+  )
+  const mergedTitles = new Set(
+    googleCandidates.map((c) => normalizeTitle(c.title)),
   )
 
   for (const ndlCandidate of ndlCandidates) {
-    if (ndlCandidate.isbn && mergedIsbns.has(ndlCandidate.isbn)) continue
-    if (ndlCandidate.isbn) mergedIsbns.add(ndlCandidate.isbn)
+    if (ndlCandidate.isbn && mergedNormalizedIsbns.has(normalizeIsbn(ndlCandidate.isbn))) continue
+    if (mergedTitles.has(normalizeTitle(ndlCandidate.title))) continue
+    if (ndlCandidate.isbn) mergedNormalizedIsbns.add(normalizeIsbn(ndlCandidate.isbn))
+    mergedTitles.add(normalizeTitle(ndlCandidate.title))
     mergedCandidates.push(ndlCandidate)
   }
 
