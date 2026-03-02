@@ -10,6 +10,7 @@ export type SelectedBook = {
   publisher: string
   year: string
   isbn: string
+  thumbnail?: string | null
 }
 
 type Props = {
@@ -45,6 +46,7 @@ export default function BookSearchInput({ onSelect, onClear, selected }: Props) 
     publisher: c.publisherName,
     year: c.publishedYear ? String(c.publishedYear) : '',
     isbn: c.isbn ?? '',
+    thumbnail: c.thumbnail,
   })
 
   // デバウンス検索
@@ -113,7 +115,14 @@ export default function BookSearchInput({ onSelect, onClear, selected }: Props) 
   if (selected) {
     return (
       <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 dark:border-indigo-800 dark:bg-indigo-950/30">
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start gap-3">
+          {selected.thumbnail && (
+            <img
+              src={selected.thumbnail}
+              alt=""
+              className="h-16 w-11 flex-shrink-0 rounded object-cover bg-slate-100 dark:bg-slate-700"
+            />
+          )}
           <div className="min-w-0 flex-1">
             <p className="font-medium text-slate-900 dark:text-slate-100 line-clamp-2">
               {selected.title}
@@ -191,18 +200,33 @@ export default function BookSearchInput({ onSelect, onClear, selected }: Props) 
                 <button
                   type="button"
                   onClick={() => handleSelect(candidate)}
-                  className="w-full px-4 py-3 text-left hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-colors border-b border-slate-100 dark:border-slate-700 last:border-0"
+                  className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-colors border-b border-slate-100 dark:border-slate-700 last:border-0"
                 >
-                  <p className="font-medium text-slate-900 dark:text-slate-100 line-clamp-2 text-sm">
-                    {candidate.title}
-                  </p>
-                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                    {[
-                      candidate.author,
-                      candidate.publisherName,
-                      candidate.publishedYear ? `${candidate.publishedYear}年` : '',
-                    ].filter(Boolean).join('　')}
-                  </p>
+                  {candidate.thumbnail ? (
+                    <img
+                      src={candidate.thumbnail}
+                      alt=""
+                      className="h-14 w-10 flex-shrink-0 rounded object-cover bg-slate-100 dark:bg-slate-700"
+                    />
+                  ) : (
+                    <div className="flex h-14 w-10 flex-shrink-0 items-center justify-center rounded bg-slate-100 text-slate-400 dark:bg-slate-700 dark:text-slate-500">
+                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+                      </svg>
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-slate-900 dark:text-slate-100 line-clamp-2 text-sm">
+                      {candidate.title}
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                      {[
+                        candidate.author,
+                        candidate.publisherName,
+                        candidate.publishedYear ? `${candidate.publishedYear}年` : '',
+                      ].filter(Boolean).join('　')}
+                    </p>
+                  </div>
                 </button>
               </li>
             ))}
