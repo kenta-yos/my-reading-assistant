@@ -1,4 +1,11 @@
 import { NextResponse } from 'next/server'
+import {
+  htmlDecode,
+  extractAll,
+  extractFirst,
+  extractPublisher,
+  cleanAuthorName,
+} from '@/lib/ndl'
 
 export type Candidate = {
   title: string
@@ -31,7 +38,7 @@ function extractYear(date: string | undefined): number | null {
   return match ? parseInt(match[1]) : null
 }
 
-function extractIsbn(
+function extractGoogleIsbn(
   identifiers: { type: string; identifier: string }[] | undefined,
 ): string | null {
   if (!identifiers) return null
@@ -39,6 +46,80 @@ function extractIsbn(
   const isbn10 = identifiers.find((id) => id.type === 'ISBN_10')
   return isbn13?.identifier ?? isbn10?.identifier ?? null
 }
+
+// --- NDL SRU 検索 ---
+
+async function searchNdl(query: string, isIsbn: boolean): Promise<Candidate[]> {
+  try {
+    const cql = isIsbn ? `isbn="${query}"` : `anywhere="${query}"`
+    const url =
+      `https://ndlsearch.ndl.go.jp/api/sru` +
+      `?operation=searchRetrieve` +
+      `&query=${encodeURIComponent(cql)}` +
+      `&maximumRecords=20` +
+      `&mediatype=1` +
+      `&recordSchema=dcndl`
+
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) })
+    const xml = await res.text()
+
+    const candidates: Candidate[] = []
+    const recordRegex = /<recordData>([\s\S]*?)<\/recordData>/g
+    let match
+
+    while ((match = recordRegex.exec(xml)) !== null) {
+      const inner = htmlDecode(match[1])
+
+      const title = extractFirst(inner, 'dcterms:title')
+      if (!title) continue
+
+      const isbnMatch = inner.match(/<dcterms:identifier[^>]*ISBN[^>]*>([^<]+)</)
+      const isbn = isbnMatch?.[1]?.trim() ?? ''
+      if (!isbn) continue
+
+      const authors = extractAll(inner, 'dc:creator')
+        .map(cleanAuthorName)
+        .filter(Boolean)
+
+      const foafNames = extractAll(inner, 'foaf:name')
+      const publisher = extractPublisher(foafNames)
+
+      const yearStr = extractFirst(inner, 'dcterms:issued').replace(/-.*$/, '')
+      const publishedYear = yearStr ? extractYear(yearStr) : null
+
+      candidates.push({
+        title,
+        author: authors.join('／'),
+        publisherName: publisher,
+        publishedYear,
+        pages: null,
+        description: null,
+        thumbnail: null,
+        isbn,
+      })
+    }
+
+    return candidates
+  } catch {
+    return []
+  }
+}
+
+// --- 日本語判定 ---
+
+function isJapaneseCandidate(c: Candidate): boolean {
+  const text = `${c.title}${c.author}${c.publisherName}`
+  return /[\u3000-\u9FFF\uF900-\uFAFF]/.test(text)
+}
+
+function isJapaneseVolume(vol: GoogleBooksVolume['volumeInfo']): boolean {
+  if (!vol) return false
+  if (vol.language === 'ja') return true
+  const text = `${vol.title ?? ''}${vol.authors?.join('') ?? ''}${vol.publisher ?? ''}`
+  return /[\u3000-\u9FFF\uF900-\uFAFF]/.test(text)
+}
+
+// --- メインハンドラ ---
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
@@ -51,9 +132,16 @@ export async function GET(req: Request) {
   // ISBN検索の場合、Google Booksで見つからなければOpenBDでタイトルを取得して再検索
   let searchQuery = q
   const isbnMatch = q.match(/^isbn[:\s]*(\d{10,13})$/i)
+  const isIsbn = !!isbnMatch
 
-  if (isbnMatch) {
-    const isbn = isbnMatch[1]
+  // NDL検索を先に発火（並行実行）
+  const ndlPromise = searchNdl(
+    isIsbn ? isbnMatch![1] : q.replace(/[\u3000\u00A0]/g, ' ').replace(/\s+/g, ' ').trim(),
+    isIsbn,
+  )
+
+  if (isIsbn) {
+    const isbn = isbnMatch![1]
     const isbnUrl = new URL('https://www.googleapis.com/books/v1/volumes')
     isbnUrl.searchParams.set('q', `isbn:${isbn}`)
     isbnUrl.searchParams.set('maxResults', '5')
@@ -84,60 +172,56 @@ export async function GET(req: Request) {
   searchQuery = searchQuery.replace(/[\u3000\u00A0]/g, ' ').replace(/\s+/g, ' ').trim()
 
   // Google Books API
-  const url = new URL('https://www.googleapis.com/books/v1/volumes')
-  url.searchParams.set('q', searchQuery)
-  url.searchParams.set('maxResults', '20')
-  url.searchParams.set('printType', 'books')
+  const googleUrl = new URL('https://www.googleapis.com/books/v1/volumes')
+  googleUrl.searchParams.set('q', searchQuery)
+  googleUrl.searchParams.set('maxResults', '20')
+  googleUrl.searchParams.set('printType', 'books')
   if (process.env.GOOGLE_BOOKS_API_KEY) {
-    url.searchParams.set('key', process.env.GOOGLE_BOOKS_API_KEY)
+    googleUrl.searchParams.set('key', process.env.GOOGLE_BOOKS_API_KEY)
   }
 
-  const res = await fetch(url.toString())
-  if (!res.ok) {
-    return NextResponse.json({ candidates: [] })
-  }
+  const googlePromise = fetch(googleUrl.toString()).then(async (res) => {
+    if (!res.ok) return []
+    const data = await res.json()
+    return (data.items ?? []) as GoogleBooksVolume[]
+  }).catch(() => [] as GoogleBooksVolume[])
 
-  const data = await res.json()
-  const items: GoogleBooksVolume[] = data.items ?? []
+  // Google Books と NDL を同時に待つ
+  const [googleResult, ndlResult] = await Promise.allSettled([googlePromise, ndlPromise])
 
-  // 日本語書籍を判定
-  const isJapanese = (vol: GoogleBooksVolume['volumeInfo']) => {
-    if (!vol) return false
-    if (vol.language === 'ja') return true
-    const text = `${vol.title ?? ''}${vol.authors?.join('') ?? ''}${vol.publisher ?? ''}`
-    return /[\u3000-\u9FFF\uF900-\uFAFF]/.test(text)
-  }
+  const googleItems: GoogleBooksVolume[] =
+    googleResult.status === 'fulfilled' ? googleResult.value : []
+  const ndlCandidates: Candidate[] =
+    ndlResult.status === 'fulfilled' ? ndlResult.value : []
 
-  // 日本語書籍を優先、同程度なら出版年が新しい順
-  const sorted = [...items].sort((a, b) => {
-    const aJa = isJapanese(a.volumeInfo) ? 0 : 1
-    const bJa = isJapanese(b.volumeInfo) ? 0 : 1
+  // --- Google Books 候補を Candidate に変換 ---
+  const googleCandidates: Candidate[] = []
+  const googleSeenIsbns = new Set<string>()
+
+  // 日本語書籍優先 + 新しい順でソート
+  const sortedGoogle = [...googleItems].sort((a, b) => {
+    const aJa = isJapaneseVolume(a.volumeInfo) ? 0 : 1
+    const bJa = isJapaneseVolume(b.volumeInfo) ? 0 : 1
     if (aJa !== bJa) return aJa - bJa
     const aYear = extractYear(a.volumeInfo?.publishedDate) ?? 0
     const bYear = extractYear(b.volumeInfo?.publishedDate) ?? 0
     return bYear - aYear
   })
 
-  // ISBN で重複排除しつつ候補を抽出（最大8件）
-  const candidates: Candidate[] = []
-  const candidateIsbns: (string | null)[] = []
-  const seenIsbns = new Set<string>()
-
-  for (const item of sorted) {
-    if (candidates.length >= 8) break
+  for (const item of sortedGoogle) {
     const vol = item.volumeInfo
     if (!vol?.title) continue
 
-    const isbn = extractIsbn(vol.industryIdentifiers)
+    const isbn = extractGoogleIsbn(vol.industryIdentifiers)
     if (isbn) {
-      if (seenIsbns.has(isbn)) continue
-      seenIsbns.add(isbn)
+      if (googleSeenIsbns.has(isbn)) continue
+      googleSeenIsbns.add(isbn)
     }
 
     const thumbnail =
       vol.imageLinks?.thumbnail ?? vol.imageLinks?.smallThumbnail ?? null
 
-    candidates.push({
+    googleCandidates.push({
       title: vol.title,
       author: vol.authors?.join('／') ?? '',
       publisherName: vol.publisher ?? '',
@@ -147,8 +231,33 @@ export async function GET(req: Request) {
       thumbnail: thumbnail ? thumbnail.replace(/^http:/, 'https:') : null,
       isbn,
     })
-    candidateIsbns.push(isbn)
   }
+
+  // --- マージ: Google 候補を先に、NDL 候補を追加（ISBN重複はGoogle優先） ---
+  const mergedCandidates: Candidate[] = [...googleCandidates]
+  const mergedIsbns = new Set(
+    googleCandidates.map((c) => c.isbn).filter((isbn): isbn is string => isbn !== null),
+  )
+
+  for (const ndlCandidate of ndlCandidates) {
+    if (ndlCandidate.isbn && mergedIsbns.has(ndlCandidate.isbn)) continue
+    if (ndlCandidate.isbn) mergedIsbns.add(ndlCandidate.isbn)
+    mergedCandidates.push(ndlCandidate)
+  }
+
+  // マージ後ソート: 日本語優先 + 新しい順
+  mergedCandidates.sort((a, b) => {
+    const aJa = isJapaneseCandidate(a) ? 0 : 1
+    const bJa = isJapaneseCandidate(b) ? 0 : 1
+    if (aJa !== bJa) return aJa - bJa
+    const aYear = a.publishedYear ?? 0
+    const bYear = b.publishedYear ?? 0
+    return bYear - aYear
+  })
+
+  // 上位8件に絞る
+  const candidates = mergedCandidates.slice(0, 8)
+  const candidateIsbns = candidates.map((c) => c.isbn)
 
   if (candidates.length === 0) {
     return NextResponse.json({ candidates: [] })
