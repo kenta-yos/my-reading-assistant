@@ -7,17 +7,17 @@ import BookSearchInput, { type SelectedBook } from './BookSearchInput'
 const PROGRESS_STEPS_URL = [
   { message: 'ページの内容を取得しています...', percent: 12 },
   { message: '内容をルカが読み込んでいます...', percent: 28 },
-  { message: '前提知識を洗い出しています...', percent: 48 },
-  { message: 'ガイドを構成しています...', percent: 68 },
-  { message: 'もうすぐ完成です...', percent: 88 },
+  { message: '読書ガイドを作成しています...', percent: 48 },
+  { message: 'もう少しで完成です...', percent: 68 },
+  { message: '仕上げをしています...', percent: 88 },
 ]
 
 const PROGRESS_STEPS_BOOK = [
   { message: '書籍情報を確認しています...', percent: 12 },
   { message: 'ルカが調べています...', percent: 28 },
-  { message: '前提知識を洗い出しています...', percent: 48 },
-  { message: 'ガイドを構成しています...', percent: 68 },
-  { message: 'もうすぐ完成です...', percent: 88 },
+  { message: '読書ガイドを作成しています...', percent: 48 },
+  { message: 'もう少しで完成です...', percent: 68 },
+  { message: '仕上げをしています...', percent: 88 },
 ]
 
 // 各ステップに進むまでの秒数（累積）
