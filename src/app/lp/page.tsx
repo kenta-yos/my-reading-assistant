@@ -75,7 +75,7 @@ export default function LandingPage() {
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             {[
               { icon: '📖', title: 'この本は何を語っているのか', desc: '全体像と著者の問いを整理。読む前に「地図」を手に入れる。' },
-              { icon: '📊', title: '自分に読めるかどうか', desc: '難易度とつまずきポイントを具体的に。不安を安心に変える。' },
+              { icon: '🧐', title: '自分に読めるかどうか', desc: '難易度とつまずきポイントを具体的に。不安を安心に変える。' },
               { icon: '🔑', title: '知っておくべきキーワード', desc: '専門用語や背景知識を事前に把握。読み始めてから戸惑わない。' },
               { icon: '💡', title: 'この本ならではの価値', desc: '他の本との違いと、読後に得られる視点を明確に。' },
             ].map((item, i) => (
