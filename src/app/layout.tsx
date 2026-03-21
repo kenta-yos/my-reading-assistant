@@ -80,25 +80,20 @@ export default function RootLayout({
           </header>
           <main className="mx-auto max-w-3xl px-4 py-8 sm:py-12">{children}</main>
           <footer className="border-t border-stone-200/80 dark:border-stone-800/80">
-            <div className="mx-auto max-w-3xl px-4 py-6 text-center space-y-2">
+            <div className="mx-auto max-w-3xl px-4 py-6 text-center space-y-3">
+              <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-stone-400 dark:text-stone-500">
+                <Link href="/terms" className="transition hover:text-stone-600 dark:hover:text-stone-300">利用規約</Link>
+                <span>·</span>
+                <Link href="/privacy" className="transition hover:text-stone-600 dark:hover:text-stone-300">プライバシーポリシー</Link>
+              </div>
               <a
                 href="https://linktr.ee/ken_book_lover"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-stone-400 transition hover:text-indigo-500 dark:text-stone-500 dark:hover:text-indigo-400"
+                className="inline-block text-xs text-stone-400 transition hover:text-indigo-500 dark:text-stone-500 dark:hover:text-indigo-400"
               >
                 Kenta | 学術と日常をつなぐ
               </a>
-              <div>
-                <a
-                  href="https://bsky.app/profile/yomuhito21.bsky.social"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-stone-400 transition hover:text-sky-500 dark:text-stone-500 dark:hover:text-sky-400"
-                >
-                  機能要望・フィードバックはこちら（@yomuhito21.bsky.social）
-                </a>
-              </div>
             </div>
           </footer>
         </Providers>

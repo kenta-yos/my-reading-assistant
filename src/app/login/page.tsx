@@ -21,9 +21,9 @@ export default function LoginPage() {
           Lukaにログイン
         </h1>
         <p className="text-sm text-stone-500 dark:text-stone-400">
-          ログインすると、1日5回までガイドを生成できます。
+          ログインすると、ガイド生成の上限が増え、
           <br />
-          ブックマーク機能も使えるようになります。
+          各種機能が使えるようになります。
         </p>
       </div>
 
@@ -46,6 +46,14 @@ export default function LoginPage() {
           Googleでログイン
         </button>
       </form>
+
+      <p className="text-xs text-stone-400 dark:text-stone-500">
+        ログインすることで、
+        <a href="/terms" className="underline underline-offset-2 hover:text-stone-600 dark:hover:text-stone-300">利用規約</a>
+        および
+        <a href="/privacy" className="underline underline-offset-2 hover:text-stone-600 dark:hover:text-stone-300">プライバシーポリシー</a>
+        に同意したものとみなします。
+      </p>
     </div>
   )
 }
