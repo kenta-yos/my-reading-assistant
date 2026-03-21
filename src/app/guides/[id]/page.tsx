@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
@@ -5,6 +6,37 @@ import DeleteButton from './DeleteButton'
 import SectionNav from '@/components/SectionNav'
 import RecommendButton from '@/components/RecommendButton'
 import ShareButton from '@/components/ShareButton'
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}): Promise<Metadata> {
+  const { id } = await params
+  const guide = await prisma.guide.findUnique({ where: { id } })
+  if (!guide) return {}
+
+  const title = `${guide.title} の読書ガイド`
+  const description = guide.summary
+    ? guide.summary.slice(0, 150) + (guide.summary.length > 150 ? '...' : '')
+    : `「${guide.title}」を読むための準備ガイド`
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'article',
+      images: ['/luka.png'],
+    },
+    twitter: {
+      card: 'summary',
+      title,
+      description,
+    },
+  }
+}
 
 type Prerequisites = {
   // 判断フェーズ

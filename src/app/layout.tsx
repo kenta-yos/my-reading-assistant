@@ -15,12 +15,29 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: '読書アシスタントLuka',
-  description: '読む前に、Lukaに聞いてみて。本のタイトルかURLを入れるだけ。',
+  title: {
+    default: '読書アシスタントLuka',
+    template: '%s | Luka',
+  },
+  description: 'どんな内容？自分に読める？前提知識は？——本のタイトルやURLを入れるだけで、ルカが読書の準備をまるごとサポート。',
   manifest: '/manifest.json',
   icons: {
     icon: '/icon.png',
     apple: '/apple-icon.png',
+  },
+  openGraph: {
+    type: 'website',
+    siteName: '読書アシスタントLuka',
+    title: '読書アシスタントLuka',
+    description: 'どんな内容？自分に読める？前提知識は？——本のタイトルやURLを入れるだけで、ルカが読書の準備をまるごとサポート。',
+    images: ['/luka.png'],
+    locale: 'ja_JP',
+  },
+  twitter: {
+    card: 'summary',
+    title: '読書アシスタントLuka',
+    description: 'どんな内容？自分に読める？前提知識は？——本のタイトルやURLを入れるだけで、ルカが読書の準備をまるごとサポート。',
+    images: ['/luka.png'],
   },
 }
 

@@ -108,6 +108,30 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '入力値が不正です' }, { status: 400 })
   }
 
+  // ── キャッシュチェック（同じ入力のガイドが既にあれば返す）──
+  const normalizedInput = inputValue.trim()
+  let cached = await prisma.guide.findFirst({
+    where: { inputType, inputValue: normalizedInput },
+    orderBy: { createdAt: 'desc' },
+  })
+  // 書籍の場合はISBNでもチェック（タイトル表記揺れをカバー）
+  if (!cached && inputType === 'BOOK_TITLE' && bookMetadata?.isbn) {
+    const allBookGuides = await prisma.guide.findMany({
+      where: { inputType: 'BOOK_TITLE' },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    })
+    cached = allBookGuides.find((g) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const meta = (g.prerequisites as any)?.bookMetadata
+      return meta?.isbn === bookMetadata.isbn
+    }) ?? null
+  }
+  if (cached) {
+    return NextResponse.json(cached)
+  }
+  // ──────────────────────────────────────────────────────
+
   // ── 使用量チェック ──────────────────────────────────────
   const today = getTodayJST()
   const usage = await prisma.apiUsage.findUnique({ where: { date: today } })
@@ -330,6 +354,7 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
       authors: bookMetadata.authors,
       publisher: bookMetadata.publisher,
       year: bookMetadata.year,
+      isbn: bookMetadata.isbn,
     }
   }
 
