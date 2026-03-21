@@ -219,7 +219,7 @@ export default async function GuidePage({
               <div className="h-0.5 bg-violet-400" />
               <div className="p-5">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-violet-500 dark:text-violet-400">
-                  似た本との違い
+                  本書のオリジナリティ
                 </p>
                 <p className="leading-relaxed text-stone-900 dark:text-stone-100">
                   {prereqs.uniqueness}
@@ -228,13 +228,13 @@ export default async function GuidePage({
             </div>
           )}
 
-          {/* 読後の変化 */}
+          {/* この本で得られる体験 */}
           {prereqs.postReadingOutcome && (
             <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
               <div className="h-0.5 bg-violet-400" />
               <div className="p-5">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-violet-500 dark:text-violet-400">
-                  読後の変化
+                  この本で得られる体験
                 </p>
                 <p className="leading-relaxed text-stone-900 dark:text-stone-100">
                   {prereqs.postReadingOutcome}
