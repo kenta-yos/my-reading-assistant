@@ -274,9 +274,6 @@ export default async function GuidePage({
                 {/* 読む上でぶつかる壁 */}
                 {prereqs.difficultyBarriers && prereqs.difficultyBarriers.length > 0 && (
                   <div>
-                    <p className="mb-2 text-xs font-semibold text-stone-500 dark:text-stone-400">
-                      ここだけ気をつけて
-                    </p>
                     <ul className="space-y-1.5">
                       {prereqs.difficultyBarriers.map((item, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm leading-relaxed text-stone-700 dark:text-stone-300">
