@@ -314,12 +314,13 @@ export default async function GuidePage({
             )}
 
             {prereqs.domainContext.keyEvents?.length > 0 && (
-              <ul className="space-y-4">
+              <ul className="relative ml-3 border-l-2 border-indigo-200 pl-6 dark:border-indigo-800">
                 {prereqs.domainContext.keyEvents.map((item, i) => (
                   <li
                     key={i}
-                    className="border-b border-stone-100 pb-4 last:border-0 last:pb-0 dark:border-stone-800"
+                    className={`relative ${i < prereqs.domainContext.keyEvents.length - 1 ? 'pb-6' : ''}`}
                   >
+                    <div className="absolute -left-[31px] top-1.5 h-3 w-3 rounded-full border-2 border-indigo-400 bg-white dark:border-indigo-500 dark:bg-stone-900" />
                     <p className="font-semibold text-stone-900 dark:text-stone-100">{item.event}</p>
                     {item.significance && (
                       <p className="mt-1.5 text-sm leading-relaxed text-stone-600 dark:text-stone-400">
