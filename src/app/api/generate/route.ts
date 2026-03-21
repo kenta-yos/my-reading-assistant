@@ -219,7 +219,16 @@ difficultyLevel は1〜5の整数で返すこと：
 ndlSearchQueries は4〜6項目。各項目の keywords は2〜3語の配列。具体的な書名を含めるな。
 入門書を見つけるためのクエリ（例: ["教育社会学", "入門"]、["社会学", "教科書"]）を2〜3項目、発展書を見つけるためのクエリ（例: 著者名+テーマ、関連する専門概念）を2〜3項目、意識的に分けて生成せよ。intent にはその検索の意図（入門書を探す／発展書を探す）を明記すること。
 
-各項目の目安：terminology 10〜15項目、keyEvents 3〜6項目、highSchoolBasics 3〜6項目（科目をまたいでよい）、prerequisiteKnowledge 5〜8項目。
+■ 項目数の厳守（これより少ないと不十分）
+- terminology: 必ず10〜15項目
+- keyEvents: 必ず3〜6項目
+- highSchoolBasics: 必ず3〜6項目（科目をまたいでよい）
+- problemFocus: 必ず3〜5項目
+- coreQuestions: 必ず3〜5項目
+- uniqueness: 必ず3〜4項目
+- postReadingOutcome: 必ず3〜5項目
+- difficultyBarriers: 必ず3〜5項目
+項目数を節約するな。指定の下限を下回ることは許容しない。
 
 ■ 精度に関する最重要ルール
 - terminology は「この本の中で著者が実際に使っているキーワード」または「著者の議論を追うために不可欠な概念」だけを挙げよ。その分野で一般的に重要でも、この本の議論に直接登場しない用語は含めるな。
