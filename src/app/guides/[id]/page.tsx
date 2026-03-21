@@ -442,7 +442,7 @@ export default async function GuidePage({
                 rel="noopener noreferrer"
                 className="mt-1 inline-block text-xs font-medium text-indigo-600 transition hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
               >
-                SNS・プロフィール →
+                @ken_book_lover
               </a>
             </div>
           </div>
