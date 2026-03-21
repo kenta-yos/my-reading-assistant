@@ -70,6 +70,12 @@ export default async function Home() {
               <br />
               そんなときは、本のタイトルや気になるネット記事のURLを入れるだけで、ルカが読書の準備をまるごとサポートしてくれます。
             </p>
+            <Link
+              href="/lp"
+              className="mt-3 inline-block text-xs font-medium text-indigo-300 transition hover:text-white"
+            >
+              Lukaについて詳しく →
+            </Link>
           </div>
         </div>
       </section>
