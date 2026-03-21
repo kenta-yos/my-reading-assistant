@@ -25,7 +25,7 @@ export default function LandingPage() {
           <h1 className="mt-8 text-3xl font-extrabold tracking-tight text-white sm:text-5xl">
             その本、読む前に
             <br />
-            <span className="text-indigo-300">ルカに聞いてみて。</span>
+            <span className="text-indigo-300">ルカに相談してみて。</span>
           </h1>
           <p className="mx-auto mt-6 max-w-lg text-base leading-relaxed text-indigo-200/80 sm:text-lg">
             何が書いてあるのか。自分に読めるのか。何を知っておけばいいのか。
