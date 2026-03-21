@@ -336,7 +336,7 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
   })
 
   // 期限切れガイドを非同期でクリーンアップ（失敗しても無視）
-  cleanupExpiredGuides().catch(() => {})
+  // cleanupExpiredGuides().catch(() => {})
 
   // 書籍メタデータを prerequisites に保存
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

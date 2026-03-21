@@ -6,7 +6,7 @@ import Link from 'next/link'
 export const dynamic = 'force-dynamic'
 
 export default async function GuidesPage() {
-  cleanupExpiredGuides().catch(() => {})
+  // cleanupExpiredGuides().catch(() => {})
 
   const guides = await prisma.guide.findMany({
     orderBy: { createdAt: 'desc' },

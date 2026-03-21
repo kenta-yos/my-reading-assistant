@@ -16,7 +16,7 @@ function getTodayJST(): string {
 
 export default async function Home() {
   // 期限切れガイドをクリーンアップ（失敗しても無視）
-  cleanupExpiredGuides().catch(() => {})
+  // cleanupExpiredGuides().catch(() => {})
 
   const [recentGuides, todayUsage] = await Promise.all([
     prisma.guide.findMany({
