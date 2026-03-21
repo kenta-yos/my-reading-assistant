@@ -10,26 +10,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: '/login',
   },
   callbacks: {
-    async signIn({ user, profile }) {
+    async signIn({ profile }) {
       if (!profile?.email) return false
-
-      // ユーザーをDBに作成 or 更新
-      await prisma.user.upsert({
-        where: { email: profile.email },
-        create: {
-          email: profile.email,
-          name: user.name ?? profile.name ?? null,
-          image: user.image ?? (profile as Record<string, unknown>).picture as string ?? null,
-        },
-        update: {
-          name: user.name ?? profile.name ?? null,
-          image: user.image ?? (profile as Record<string, unknown>).picture as string ?? null,
-        },
-      })
+      try {
+        const existing = await prisma.user.findUnique({
+          where: { email: profile.email },
+        })
+        if (!existing) {
+          await prisma.user.create({
+            data: {
+              email: profile.email,
+              name: (profile.name as string) ?? null,
+              image: (profile.picture as string) ?? null,
+            },
+          })
+        }
+      } catch (e) {
+        console.error('[auth] user upsert failed:', e)
+      }
       return true
     },
-    async jwt({ token, profile }) {
-      if (profile?.email) {
+    async jwt({ token, trigger, profile }) {
+      if (trigger === 'signIn' && profile?.email) {
         const dbUser = await prisma.user.findUnique({
           where: { email: profile.email },
         })
