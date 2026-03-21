@@ -6,6 +6,8 @@ import DeleteButton from './DeleteButton'
 import SectionNav from '@/components/SectionNav'
 import RecommendButton from '@/components/RecommendButton'
 import ShareButton from '@/components/ShareButton'
+import BookmarkButton from '@/components/BookmarkButton'
+import { auth } from '@/lib/auth'
 
 export async function generateMetadata({
   params,
@@ -103,8 +105,17 @@ export default async function GuidePage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const guide = await prisma.guide.findUnique({ where: { id } })
+  const [guide, session] = await Promise.all([
+    prisma.guide.findUnique({ where: { id } }),
+    auth(),
+  ])
   if (!guide) notFound()
+
+  const isBookmarked = session?.user?.id
+    ? !!(await prisma.bookmark.findUnique({
+        where: { userId_guideId: { userId: session.user.id, guideId: id } },
+      }))
+    : false
 
   const prereqs = guide.prerequisites as unknown as Prerequisites
   const difficulty = getDifficulty(prereqs?.difficultyLevel)
@@ -146,7 +157,8 @@ export default async function GuidePage({
               </>
             )}
           </div>
-          <div className="flex flex-shrink-0 items-center gap-2">
+          <div className="flex flex-shrink-0 items-center gap-1">
+            <BookmarkButton guideId={guide.id} initialBookmarked={isBookmarked} />
             <ShareButton title={guide.title} />
             <DeleteButton id={guide.id} />
           </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import BookSearchInput, { type SelectedBook } from './BookSearchInput'
 
 const PROGRESS_STEPS_URL = [
@@ -94,6 +95,7 @@ export default function GuideForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [startedAt, setStartedAt] = useState(0)
   const [error, setError] = useState('')
+  const [requireLogin, setRequireLogin] = useState(false)
   const startedAtRef = useRef(0)
 
   const canSubmit =
@@ -130,10 +132,12 @@ export default function GuideForm() {
         try {
           const data = await res.json()
           message = data.error || message
+          if (data.requireLogin) setRequireLogin(true)
         } catch {
           // JSON parse failed — likely HTML error page (e.g. Vercel timeout)
         }
         setError(message)
+        setIsLoading(false)
         return
       }
 
@@ -199,9 +203,17 @@ export default function GuideForm() {
 
       {/* エラー */}
       {error && (
-        <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
-          ⚠ {error}
-        </p>
+        <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
+          <p>⚠ {error}</p>
+          {requireLogin && (
+            <Link
+              href="/login"
+              className="mt-2 inline-block rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+            >
+              Googleでログイン
+            </Link>
+          )}
+        </div>
       )}
 
       {/* 進捗表示 */}

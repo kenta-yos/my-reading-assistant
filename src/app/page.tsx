@@ -1,13 +1,14 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-import { cleanupExpiredGuides } from '@/lib/cleanup'
+import { auth } from '@/lib/auth'
 import GuideForm from '@/components/GuideForm'
 import GuideCard from '@/components/GuideCard'
 
 export const dynamic = 'force-dynamic'
 
-const DAILY_LIMIT = 200
+const USER_DAILY_LIMIT = 5
+const ANON_DAILY_LIMIT = 2
 
 function getTodayJST(): string {
   const jst = new Date(Date.now() + 9 * 60 * 60 * 1000)
@@ -15,10 +16,12 @@ function getTodayJST(): string {
 }
 
 export default async function Home() {
-  // 期限切れガイドをクリーンアップ（失敗しても無視）
-  // cleanupExpiredGuides().catch(() => {})
+  const session = await auth()
+  const userId = session?.user?.id ?? null
+  const today = getTodayJST()
+  const dailyLimit = userId ? USER_DAILY_LIMIT : ANON_DAILY_LIMIT
 
-  const [recentGuides, todayUsage] = await Promise.all([
+  const [recentGuides, userUsage] = await Promise.all([
     prisma.guide.findMany({
       orderBy: { createdAt: 'desc' },
       take: 3,
@@ -31,11 +34,13 @@ export default async function Home() {
         createdAt: true,
       },
     }),
-    prisma.apiUsage.findUnique({ where: { date: getTodayJST() } }),
+    prisma.userUsage.findUnique({
+      where: { userId_date: { userId: userId ?? 'anonymous', date: today } },
+    }),
   ])
 
-  const usedCount = todayUsage?.count ?? 0
-  const usagePercent = Math.min(100, Math.round((usedCount / DAILY_LIMIT) * 100))
+  const usedCount = userUsage?.count ?? 0
+  const usagePercent = Math.min(100, Math.round((usedCount / dailyLimit) * 100))
 
   const usageColor =
     usagePercent >= 90 ? 'bg-red-400'
@@ -86,7 +91,7 @@ export default async function Home() {
                     : 'text-stone-400'
                 }`}
               >
-                {usedCount} / {DAILY_LIMIT}
+                {usedCount} / {dailyLimit}
               </span>
             </div>
             <div className="h-1 w-full rounded-full bg-stone-100 dark:bg-stone-800">

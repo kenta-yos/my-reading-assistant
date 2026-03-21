@@ -10,15 +10,83 @@ datasource db {
   provider = "postgresql"
 }
 
+// ── Auth.js models ──
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  guides        Guide[]
+  bookmarks     Bookmark[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ── App models ──
+
 model Guide {
-  id                String    @id @default(cuid())
-  title             String
-  inputType         String    // "URL" or "BOOK_TITLE"
-  inputValue        String
-  summary           String    @db.Text
-  prerequisites     Json
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id            String     @id @default(cuid())
+  title         String
+  inputType     String     // "URL" or "BOOK_TITLE"
+  inputValue    String
+  summary       String     @db.Text
+  prerequisites Json
+  userId        String?
+  user          User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  bookmarks     Bookmark[]
+  expiresAt     DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  guideId   String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guide     Guide    @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, guideId])
 }
 
 // Gemini API 無料枠の使用量管理（日次）
@@ -30,4 +98,16 @@ model ApiUsage {
   blocked   Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ユーザー別の日次使用量管理
+model UserUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  date      String   // YYYY-MM-DD（JST）
+  count     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date])
 }

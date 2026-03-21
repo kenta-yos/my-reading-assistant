@@ -2,14 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { prisma } from '@/lib/prisma'
 import { cleanupExpiredGuides } from '@/lib/cleanup'
+import { auth } from '@/lib/auth'
 
 
 export const maxDuration = 60
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
-// 1日の上限（gemini-2.0-flash 無料枠は1500 RPD）
-const DAILY_LIMIT = 200
+// 全体の1日上限（Gemini API保護用）
+const GLOBAL_DAILY_LIMIT = 200
+// ユーザー別上限
+const USER_DAILY_LIMIT = 5
+const ANON_DAILY_LIMIT = 2
 
 // JST（UTC+9）の今日の日付を返す
 function getTodayJST(): string {
@@ -132,17 +136,48 @@ export async function POST(request: NextRequest) {
   }
   // ──────────────────────────────────────────────────────
 
+  // ── 認証チェック ──────────────────────────────────────
+  const session = await auth()
+  const userId = session?.user?.id ?? null
+
   // ── 使用量チェック ──────────────────────────────────────
   const today = getTodayJST()
   const usage = await prisma.apiUsage.findUnique({ where: { date: today } })
 
-  if ((usage?.count ?? 0) >= DAILY_LIMIT) {
+  // 全体のAPI上限
+  if ((usage?.count ?? 0) >= GLOBAL_DAILY_LIMIT) {
     return NextResponse.json(
-      {
-        error: `本日の上限（${DAILY_LIMIT}回）に達しました。今日はここまでです。明日またお試しください。`,
-      },
+      { error: '本日のサービス全体の上限に達しました。明日またお試しください。' },
       { status: 429 }
     )
+  }
+
+  // ユーザー別の上限
+  if (userId) {
+    const userUsage = await prisma.userUsage.findUnique({
+      where: { userId_date: { userId, date: today } },
+    })
+    if ((userUsage?.count ?? 0) >= USER_DAILY_LIMIT) {
+      return NextResponse.json(
+        { error: `本日の上限（${USER_DAILY_LIMIT}回）に達しました。明日またお試しください。` },
+        { status: 429 }
+      )
+    }
+  } else {
+    // 未ログインはIPベースでなくcookie/セッションなしのため、全体のanon枠で制限
+    // 簡易的に全体のanon使用量で管理
+    const anonUsage = await prisma.userUsage.findUnique({
+      where: { userId_date: { userId: 'anonymous', date: today } },
+    })
+    if ((anonUsage?.count ?? 0) >= ANON_DAILY_LIMIT) {
+      return NextResponse.json(
+        {
+          error: 'ログインなしでの利用上限に達しました。Googleアカウントでログインしてください。',
+          requireLogin: true,
+        },
+        { status: 429 }
+      )
+    }
   }
   // ──────────────────────────────────────────────────────
 
@@ -325,15 +360,20 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
     )
   }
 
-  // 成功時のみカウントをインクリメント
+  // 成功時のみカウントをインクリメント（全体 + ユーザー別）
   await prisma.apiUsage.upsert({
     where: { date: today },
     create: { date: today, count: 1 },
     update: { count: { increment: 1 } },
   })
+  await prisma.userUsage.upsert({
+    where: { userId_date: { userId: userId ?? 'anonymous', date: today } },
+    create: { userId: userId ?? 'anonymous', date: today, count: 1 },
+    update: { count: { increment: 1 } },
+  })
 
   // 期限切れガイドを非同期でクリーンアップ（失敗しても無視）
-  // cleanupExpiredGuides().catch(() => {})
+  cleanupExpiredGuides().catch(() => {})
 
   // 書籍メタデータを prerequisites に保存
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -347,6 +387,9 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
     }
   }
 
+  // ガイドの有効期限: 1ヶ月後
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+
   const guide = await prisma.guide.create({
     data: {
       title: guideData.title || inputValue,
@@ -354,6 +397,8 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
       inputValue,
       summary: guideData.summary || '',
       prerequisites: prereqs,
+      userId,
+      expiresAt,
     },
   })
 
