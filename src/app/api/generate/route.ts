@@ -69,19 +69,47 @@ function stripCitations(obj: unknown): unknown {
   return obj
 }
 
+function repairTruncatedJson(text: string): string {
+  // 閉じられていない括弧を補完
+  let openBraces = 0
+  let openBrackets = 0
+  let inString = false
+  let escape = false
+  for (const ch of text) {
+    if (escape) { escape = false; continue }
+    if (ch === '\\') { escape = true; continue }
+    if (ch === '"') { inString = !inString; continue }
+    if (inString) continue
+    if (ch === '{') openBraces++
+    if (ch === '}') openBraces--
+    if (ch === '[') openBrackets++
+    if (ch === ']') openBrackets--
+  }
+  // 文字列が閉じていない場合
+  if (inString) text += '"'
+  // 括弧を補完
+  for (let i = 0; i < openBrackets; i++) text += ']'
+  for (let i = 0; i < openBraces; i++) text += '}'
+  return text
+}
+
 function parseJsonResponse(text: string): object {
   let parsed: object
+  // まず生テキストをパース
   try {
     parsed = JSON.parse(text)
   } catch {
+    // コードブロックを除去
     const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/)
-    if (codeBlockMatch) {
-      parsed = JSON.parse(codeBlockMatch[1].trim())
-    } else {
-      const jsonMatch = text.match(/\{[\s\S]*\}/)
-      if (jsonMatch) {
-        parsed = JSON.parse(jsonMatch[0])
-      } else {
+    const jsonText = codeBlockMatch ? codeBlockMatch[1].trim() : (text.match(/\{[\s\S]*/)?.[0] ?? '')
+    if (!jsonText) throw new Error('JSONの解析に失敗しました')
+    try {
+      parsed = JSON.parse(jsonText)
+    } catch {
+      // 途中で切れたJSONを修復して再パース
+      try {
+        parsed = JSON.parse(repairTruncatedJson(jsonText))
+      } catch {
         throw new Error('JSONの解析に失敗しました')
       }
     }
@@ -300,7 +328,7 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
     const modelConfig: Parameters<typeof genAI.getGenerativeModel>[0] = {
       model: 'gemini-2.5-flash',
       systemInstruction: systemPrompt,
-      generationConfig: { temperature: 0.2 },
+      generationConfig: { temperature: 0.2, responseMimeType: 'application/json' },
     }
     if (inputType !== 'URL') {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
