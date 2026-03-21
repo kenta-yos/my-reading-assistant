@@ -128,18 +128,18 @@ export default async function GuidePage({
   ].filter(Boolean) as { id: string; label: string }[]
 
   return (
-    <div className="space-y-10 sm:space-y-12">
+    <div className="space-y-14 sm:space-y-16">
       {/* Header */}
-      <header className="space-y-5">
+      <header className="relative space-y-6 rounded-2xl bg-gradient-to-br from-indigo-50/60 via-white to-stone-50 px-5 py-7 shadow-sm ring-1 ring-stone-200/60 dark:from-indigo-950/20 dark:via-stone-900 dark:to-stone-950 dark:ring-stone-800/60 sm:px-8 sm:py-10">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex flex-wrap items-center gap-2 text-sm text-stone-500">
+          <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-stone-400 dark:text-stone-500">
             <span>{guide.inputType === 'URL' ? 'ウェブ記事' : '書籍'}</span>
             <span>·</span>
             <span>{date}</span>
             {difficulty && (
               <>
                 <span>·</span>
-                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${difficulty.className}`}>
+                <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold shadow-sm ${difficulty.className}`}>
                   {difficulty.label}
                 </span>
               </>
@@ -151,25 +151,25 @@ export default async function GuidePage({
           </div>
         </div>
 
-        <h1 className="text-2xl font-bold text-stone-950 dark:text-stone-50 sm:text-3xl">
+        <h1 className="text-3xl font-extrabold tracking-tight text-stone-950 dark:text-stone-50 sm:text-4xl">
           {guide.title}
         </h1>
 
         {prereqs?.bookMetadata && (
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             {prereqs.bookMetadata.authors?.length ? (
-              <p className="text-sm text-stone-600 dark:text-stone-300">
+              <p className="text-sm font-medium text-stone-600 dark:text-stone-300">
                 {prereqs.bookMetadata.authors.join('、')}
               </p>
             ) : null}
             <div className="flex flex-wrap gap-1.5">
               {prereqs.bookMetadata.publisher && (
-                <span className="inline-block rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-600 dark:bg-stone-700 dark:text-stone-300">
+                <span className="inline-block rounded-full bg-white/80 px-2.5 py-0.5 text-xs font-medium text-stone-600 ring-1 ring-stone-200/60 dark:bg-stone-800/80 dark:text-stone-300 dark:ring-stone-700/60">
                   {prereqs.bookMetadata.publisher}
                 </span>
               )}
               {prereqs.bookMetadata.year && (
-                <span className="inline-block rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-600 dark:bg-stone-700 dark:text-stone-300">
+                <span className="inline-block rounded-full bg-white/80 px-2.5 py-0.5 text-xs font-medium text-stone-600 ring-1 ring-stone-200/60 dark:bg-stone-800/80 dark:text-stone-300 dark:ring-stone-700/60">
                   {prereqs.bookMetadata.year}年
                 </span>
               )}
@@ -181,11 +181,11 @@ export default async function GuidePage({
         )}
 
         {guide.summary && (
-          <p className="text-[15px] leading-relaxed text-stone-700 dark:text-stone-300">{guide.summary}</p>
+          <p className="text-base leading-[1.8] text-stone-600 dark:text-stone-300 sm:text-[17px]">{guide.summary}</p>
         )}
 
         {prereqs?.aboutAuthor && (
-          <p className="text-sm leading-relaxed text-stone-500 dark:text-stone-400">{prereqs.aboutAuthor}</p>
+          <p className="border-l-2 border-stone-200 pl-4 text-sm leading-relaxed text-stone-500 italic dark:border-stone-700 dark:text-stone-400">{prereqs.aboutAuthor}</p>
         )}
       </header>
 
@@ -193,7 +193,7 @@ export default async function GuidePage({
 
       {/* 問題関心 */}
       {prereqs?.problemFocus && (
-        <section id="focus" className="scroll-mt-24 space-y-4">
+        <section id="focus" className="scroll-mt-28 space-y-5">
           <SectionHeading title="問題関心" />
           <BulletCard items={prereqs.problemFocus} />
         </section>
@@ -201,7 +201,7 @@ export default async function GuidePage({
 
       {/* この本が答えようとしている問い */}
       {prereqs?.coreQuestions && prereqs.coreQuestions.length > 0 && (
-        <section id="questions" className="scroll-mt-24 space-y-4">
+        <section id="questions" className="scroll-mt-28 space-y-5">
           <SectionHeading title="この本が答えようとしている問い" />
           <BulletCard items={prereqs.coreQuestions} marker="?" />
         </section>
@@ -209,7 +209,7 @@ export default async function GuidePage({
 
       {/* 本書のオリジナリティ */}
       {prereqs?.uniqueness && (
-        <section id="uniqueness" className="scroll-mt-24 space-y-4">
+        <section id="uniqueness" className="scroll-mt-28 space-y-5">
           <SectionHeading title="本書のオリジナリティ" />
           <BulletCard items={prereqs.uniqueness} />
         </section>
@@ -217,7 +217,7 @@ export default async function GuidePage({
 
       {/* この本で得られる体験 */}
       {prereqs?.postReadingOutcome && (
-        <section id="outcome" className="scroll-mt-24 space-y-4">
+        <section id="outcome" className="scroll-mt-28 space-y-5">
           <SectionHeading title="この本で得られる体験" />
           <BulletCard items={prereqs.postReadingOutcome} />
         </section>
@@ -225,13 +225,13 @@ export default async function GuidePage({
 
       {/* 難易度 */}
       {(difficulty || prereqs?.difficultyBarriers?.length) && (
-        <section id="difficulty" className="scroll-mt-24 space-y-4">
+        <section id="difficulty" className="scroll-mt-28 space-y-5">
           <SectionHeading title="難易度" />
-          <div className="rounded-xl border border-stone-200 bg-white p-5 space-y-4 dark:border-stone-700 dark:bg-stone-900">
+          <div className="rounded-2xl bg-white/80 p-6 space-y-4 shadow-sm ring-1 ring-stone-950/5 backdrop-blur-sm dark:bg-stone-900/80 dark:ring-white/5">
             {difficulty && (
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
-                  <span className={`rounded-full px-3 py-1 text-sm font-semibold ${difficulty.className}`}>
+                  <span className={`rounded-full px-3 py-1 text-sm font-semibold shadow-sm ${difficulty.className}`}>
                     {difficulty.label}
                   </span>
                   {typeof prereqs.difficultyLevel === 'number' && (
@@ -284,13 +284,13 @@ export default async function GuidePage({
 
       {/* 関連キーワード */}
       {prereqs?.terminology?.length > 0 && (
-        <section id="terminology" className="scroll-mt-24 space-y-4">
+        <section id="terminology" className="scroll-mt-28 space-y-5">
           <SectionHeading title="関連キーワード" />
           <div className="grid gap-3 sm:grid-cols-2">
             {prereqs.terminology.map((item, i) => (
               <div
                 key={i}
-                className="rounded-xl border border-stone-200 bg-white p-4 dark:border-stone-700 dark:bg-stone-900"
+                className="rounded-2xl bg-white/80 p-5 shadow-sm ring-1 ring-stone-950/5 backdrop-blur-sm transition-shadow hover:shadow-md dark:bg-stone-900/80 dark:ring-white/5"
               >
                 <dt className="font-semibold text-stone-950 dark:text-stone-100">{item.term}</dt>
                 <dd className="mt-1.5 text-sm leading-relaxed text-stone-600 dark:text-stone-400">
@@ -304,9 +304,9 @@ export default async function GuidePage({
 
       {/* コンテクスト */}
       {prereqs?.domainContext && (
-        <section id="context" className="scroll-mt-24 space-y-4">
+        <section id="context" className="scroll-mt-28 space-y-5">
           <SectionHeading title="この領域のコンテクスト" />
-          <div className="rounded-xl border border-stone-200 bg-white p-5 space-y-4 dark:border-stone-700 dark:bg-stone-900">
+          <div className="rounded-2xl bg-white/80 p-6 space-y-4 shadow-sm ring-1 ring-stone-950/5 backdrop-blur-sm dark:bg-stone-900/80 dark:ring-white/5">
             {prereqs.domainContext.overview && (
               <p className="text-[15px] leading-relaxed text-stone-700 dark:text-stone-300">
                 {prereqs.domainContext.overview}
@@ -342,7 +342,7 @@ export default async function GuidePage({
 
       {/* 関連書籍 */}
       {(prereqs?.recommendedResources?.length || prereqs?.ndlSearchQueries?.length) && (
-        <section id="books" className="scroll-mt-24 space-y-4">
+        <section id="books" className="scroll-mt-28 space-y-5">
           <SectionHeading title="関連書籍" />
           {prereqs.recommendedResources && prereqs.recommendedResources.length > 0 ? (
             (() => {
@@ -397,10 +397,11 @@ export default async function GuidePage({
       )}
 
       {/* Bottom */}
-      <footer className="space-y-8 border-t border-stone-100 pt-8 text-center dark:border-stone-800">
+      <footer className="space-y-8 pt-8 text-center">
+        <div className="h-px bg-gradient-to-r from-transparent via-stone-200 to-transparent dark:via-stone-800" />
         <Link
           href="/"
-          className="inline-block rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
+          className="inline-block rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-8 py-3 text-sm font-bold text-white shadow-md shadow-indigo-500/20 transition hover:from-indigo-700 hover:to-indigo-600 hover:shadow-lg hover:shadow-indigo-500/30"
         >
           ＋ 新しいガイドを生成する
         </Link>
@@ -408,7 +409,7 @@ export default async function GuidePage({
           AIが生成したコンテンツです。誤った情報が含まれている可能性もありますので、あくまでも参考情報としてご利用ください。
         </p>
 
-        <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-6 text-center dark:border-indigo-900/30 dark:from-indigo-950/20 dark:to-stone-900">
+        <div className="rounded-2xl bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-8 text-center shadow-sm ring-1 ring-indigo-100/80 dark:from-indigo-950/30 dark:via-stone-900 dark:to-violet-950/20 dark:ring-indigo-800/30">
           <p className="text-sm leading-relaxed text-stone-600 dark:text-stone-400">
             サービスの運営にはAIのAPI利用料がかかっています。もしLukaが役に立ったら、応援していただけるととても嬉しいです。
           </p>
@@ -416,7 +417,7 @@ export default async function GuidePage({
             href="https://ofuse.me/bdd35efd"
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 inline-block rounded-full bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+            className="mt-4 inline-block rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-indigo-500/20 transition hover:from-indigo-700 hover:to-indigo-600 hover:shadow-lg hover:shadow-indigo-500/30 dark:from-indigo-500 dark:to-indigo-400"
           >
             コーヒー1杯分の応援をする
           </a>
@@ -430,9 +431,9 @@ export default async function GuidePage({
 
 function SectionHeading({ title }: { title: string }) {
   return (
-    <div className="flex items-center gap-2.5">
-      <div className="h-5 w-1 rounded-full bg-indigo-400 dark:bg-indigo-500" />
-      <h2 className="text-base font-bold text-stone-900 dark:text-stone-50 sm:text-lg">{title}</h2>
+    <div className="flex items-center gap-3">
+      <div className="h-6 w-1.5 rounded-full bg-gradient-to-b from-indigo-500 to-indigo-300 dark:from-indigo-400 dark:to-indigo-600" />
+      <h2 className="text-lg font-bold tracking-tight text-stone-900 dark:text-stone-50 sm:text-xl">{title}</h2>
     </div>
   )
 }
@@ -440,19 +441,19 @@ function SectionHeading({ title }: { title: string }) {
 function BulletCard({ label, items, marker }: { label?: string; items: string | string[]; marker?: string }) {
   const list = Array.isArray(items) ? items : [items]
   return (
-    <div className="rounded-xl border border-stone-200 bg-white p-5 dark:border-stone-700 dark:bg-stone-900">
+    <div className="rounded-2xl bg-white/80 p-6 shadow-sm ring-1 ring-stone-950/5 backdrop-blur-sm dark:bg-stone-900/80 dark:ring-white/5">
       {label && (
         <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-stone-400 dark:text-stone-500">
           {label}
         </p>
       )}
-      <ul className="space-y-2">
+      <ul className="space-y-3">
         {list.map((item, i) => (
           <li key={i} className="flex items-start gap-2.5 text-[15px] leading-relaxed text-stone-800 dark:text-stone-200">
             {marker ? (
-              <span className="mt-0.5 flex-shrink-0 font-medium text-indigo-400 dark:text-indigo-500">{marker}</span>
+              <span className="mt-0.5 flex-shrink-0 text-lg font-medium text-indigo-500 dark:text-indigo-400">{marker}</span>
             ) : (
-              <span className="mt-2.5 h-1 w-1 flex-shrink-0 rounded-full bg-stone-300 dark:bg-stone-600" />
+              <span className="mt-2.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-indigo-300 dark:bg-indigo-500" />
             )}
             {item}
           </li>
@@ -464,7 +465,7 @@ function BulletCard({ label, items, marker }: { label?: string; items: string | 
 
 function BookCard({ book }: { book: NonNullable<Prerequisites['recommendedResources']>[number] }) {
   return (
-    <div className="rounded-xl border border-stone-200 bg-white p-5 dark:border-stone-700 dark:bg-stone-900">
+    <div className="rounded-2xl bg-white/80 p-5 shadow-sm ring-1 ring-stone-950/5 backdrop-blur-sm dark:bg-stone-900/80 dark:ring-white/5">
       <p className="font-semibold text-stone-950 dark:text-stone-100">
         {book.isbn ? (
           <a

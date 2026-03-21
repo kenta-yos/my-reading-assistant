@@ -22,16 +22,13 @@ export default function SectionNav({ sections }: { sections: SectionItem[] }) {
             setVisible(true)
           }
         }
-        // Hide if none are intersecting
         const anyVisible = entries.some((e) => e.isIntersecting)
         if (!anyVisible) {
-          // Check if all observed elements are above viewport (scrolled past)
           const allAbove = elements.every((el) => {
             const rect = el.getBoundingClientRect()
             return rect.bottom < 0
           })
           if (!allAbove) {
-            // We're above the first section — hide nav
             const firstRect = elements[0].getBoundingClientRect()
             if (firstRect.top > window.innerHeight * 0.3) {
               setVisible(false)
@@ -65,16 +62,16 @@ export default function SectionNav({ sections }: { sections: SectionItem[] }) {
           : 'pointer-events-none -translate-y-full opacity-0'
       }`}
     >
-      <div className="border-b border-stone-200/80 bg-white/95 backdrop-blur-sm dark:border-stone-800/80 dark:bg-stone-950/95">
+      <div className="border-b border-stone-200/50 bg-white/80 shadow-sm backdrop-blur-md dark:border-stone-800/50 dark:bg-stone-950/80">
         <nav className="mx-auto flex max-w-3xl flex-wrap gap-1.5 px-4 py-2">
           {sections.map((section) => (
             <button
               key={section.id}
               onClick={() => handleClick(section.id)}
-              className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
+              className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-all ${
                 activeId === section.id
-                  ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                  : 'text-stone-400 hover:text-stone-600 dark:hover:text-stone-300'
+                  ? 'bg-indigo-600 text-white shadow-sm dark:bg-indigo-500'
+                  : 'text-stone-400 hover:bg-stone-100 hover:text-stone-700 dark:hover:bg-stone-800 dark:hover:text-stone-200'
               }`}
             >
               {section.label}

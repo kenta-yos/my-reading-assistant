@@ -57,7 +57,7 @@ export default async function Home() {
           />
           <div>
             <h1 className="text-xl font-bold leading-snug text-white sm:text-2xl">
-              きみの好奇心に、<br className="sm:hidden" />最高のブーストを
+              読みたい気持ちを、<br className="sm:hidden" />後押しさせてください
             </h1>
             <p className="mt-2 text-xs leading-relaxed text-indigo-200 sm:text-sm">
               どんな内容なんだろう...？難しそうだけど読めるかな...？
