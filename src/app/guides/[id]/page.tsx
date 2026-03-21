@@ -126,8 +126,7 @@ export default async function GuidePage({
     (difficulty || prereqs?.difficultyBarriers?.length) && { id: 'difficulty', label: '難易度' },
     prereqs?.terminology?.length > 0 && { id: 'terminology', label: 'キーワード' },
     prereqs?.domainContext && { id: 'context', label: 'コンテクスト' },
-    prereqs?.highSchoolBasics?.length > 0 && { id: 'basics', label: '基礎知識' },
-    (prereqs?.recommendedResources?.length || prereqs?.ndlSearchQueries?.length) && { id: 'books', label: '関連書籍' },
+(prereqs?.recommendedResources?.length || prereqs?.ndlSearchQueries?.length) && { id: 'books', label: '関連書籍' },
   ].filter(Boolean) as { id: string; label: string }[]
 
   return (
@@ -378,32 +377,6 @@ export default async function GuidePage({
         </Section>
       )}
 
-      {/* Section 03 — 高校レベル基礎知識 */}
-      {prereqs?.highSchoolBasics?.length > 0 && (
-        <Section id="basics" title="高校レベルで押さえておきたい基礎知識" accent="amber">
-          <div className="space-y-3">
-            {prereqs.highSchoolBasics.map((item, i) => (
-              <div
-                key={i}
-                className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900"
-              >
-                <div className="h-0.5 bg-amber-400" />
-                <div className="p-5">
-                  <div className="mb-2.5 flex flex-wrap items-center gap-2">
-                    <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-                      {item.subject}
-                    </span>
-                    <span className="font-semibold text-stone-950 dark:text-stone-100">{item.concept}</span>
-                  </div>
-                  <p className="text-sm leading-relaxed text-stone-900 dark:text-stone-100">
-                    {item.explanation}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Section>
-      )}
 
 
       {/* Section 05 — 関連書籍 */}
