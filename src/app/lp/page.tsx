@@ -22,13 +22,15 @@ export default function LandingPage() {
             className="mx-auto rounded-full shadow-2xl shadow-indigo-500/20 ring-2 ring-white/10"
             priority
           />
-          <h1 className="mt-6 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+          <h1 className="mt-6 text-2xl font-extrabold tracking-tight text-white sm:text-4xl">
             その本、読む前に
             <br />
             <span className="text-indigo-300">ルカに相談してみて。</span>
           </h1>
-          <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-indigo-200/80 sm:text-base">
-            本のタイトルを入れるだけで、AIが読書の準備をまるごとサポートします。
+          <p className="mx-auto mt-4 px-4 text-xs leading-relaxed text-indigo-200/80 sm:px-0 sm:text-base">
+            本のタイトルを入れるだけで、
+            <br className="sm:hidden" />
+            AIが読書の準備をまるごとサポートします。
           </p>
           <Link
             href="/"
