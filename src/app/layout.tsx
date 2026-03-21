@@ -82,14 +82,6 @@ export default function RootLayout({
                 <span>·</span>
                 <Link href="/privacy" className="transition hover:text-stone-600 dark:hover:text-stone-300">プライバシーポリシー</Link>
               </div>
-              <a
-                href="https://linktr.ee/ken_book_lover"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block text-xs text-stone-400 transition hover:text-indigo-500 dark:text-stone-500 dark:hover:text-indigo-400"
-              >
-                Kenta | 学術と日常をつなぐ
-              </a>
             </div>
           </footer>
         </Providers>
