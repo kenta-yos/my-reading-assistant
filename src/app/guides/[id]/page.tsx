@@ -40,10 +40,10 @@ export async function generateMetadata({
 
 type Prerequisites = {
   // 判断フェーズ
-  problemFocus?: string
+  problemFocus?: string | string[]
   coreQuestions?: string[]
-  uniqueness?: string
-  postReadingOutcome?: string
+  uniqueness?: string | string[]
+  postReadingOutcome?: string | string[]
   difficultyLevel: number | 'beginner' | 'intermediate' | 'advanced'
   difficultyDimensions?: {
     vocabulary: number
@@ -211,67 +211,22 @@ export default async function GuidePage({
 
           {/* 問題関心 */}
           {prereqs.problemFocus && (
-            <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
-              <div className="h-0.5 bg-violet-400" />
-              <div className="p-5">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-violet-500 dark:text-violet-400">
-                  問題関心
-                </p>
-                <p className="leading-relaxed text-stone-900 dark:text-stone-100">
-                  {prereqs.problemFocus}
-                </p>
-              </div>
-            </div>
+            <JudgmentCard label="問題関心" items={prereqs.problemFocus} />
           )}
 
           {/* この本が答えようとしている問い */}
           {prereqs.coreQuestions && prereqs.coreQuestions.length > 0 && (
-            <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
-              <div className="h-0.5 bg-violet-400" />
-              <div className="p-5">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-violet-500 dark:text-violet-400">
-                  この本が答えようとしている問い
-                </p>
-                <ul className="space-y-2">
-                  {prereqs.coreQuestions.map((q, i) => (
-                    <li key={i} className="flex items-start gap-2.5 leading-relaxed text-stone-900 dark:text-stone-100">
-                      <span className="mt-0.5 flex-shrink-0 text-violet-400 dark:text-violet-500">?</span>
-                      {q}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
+            <JudgmentCard label="この本が答えようとしている問い" items={prereqs.coreQuestions} marker="?" />
           )}
 
           {/* この本ならではの独自性 */}
           {prereqs.uniqueness && (
-            <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
-              <div className="h-0.5 bg-violet-400" />
-              <div className="p-5">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-violet-500 dark:text-violet-400">
-                  本書のオリジナリティ
-                </p>
-                <p className="leading-relaxed text-stone-900 dark:text-stone-100">
-                  {prereqs.uniqueness}
-                </p>
-              </div>
-            </div>
+            <JudgmentCard label="本書のオリジナリティ" items={prereqs.uniqueness} />
           )}
 
           {/* この本で得られる体験 */}
           {prereqs.postReadingOutcome && (
-            <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
-              <div className="h-0.5 bg-violet-400" />
-              <div className="p-5">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-violet-500 dark:text-violet-400">
-                  この本で得られる体験
-                </p>
-                <p className="leading-relaxed text-stone-900 dark:text-stone-100">
-                  {prereqs.postReadingOutcome}
-                </p>
-              </div>
-            </div>
+            <JudgmentCard label="この本で得られる体験" items={prereqs.postReadingOutcome} />
           )}
 
           {/* 難易度 */}
@@ -682,6 +637,32 @@ const dimensionLabels: { key: string; label: string; description: string }[] = [
   { key: 'volume', label: '分量・密度', description: '分量と情報密度' },
   { key: 'culturalContext', label: '文化的前提', description: '特定文化圏の知識の必要度' },
 ]
+
+function JudgmentCard({ label, items, marker }: { label: string; items: string | string[]; marker?: string }) {
+  const list = Array.isArray(items) ? items : [items]
+  return (
+    <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
+      <div className="h-0.5 bg-violet-400" />
+      <div className="p-5">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-violet-500 dark:text-violet-400">
+          {label}
+        </p>
+        <ul className="space-y-2">
+          {list.map((item, i) => (
+            <li key={i} className="flex items-start gap-2.5 leading-relaxed text-stone-900 dark:text-stone-100">
+              {marker ? (
+                <span className="mt-0.5 flex-shrink-0 text-violet-400 dark:text-violet-500">{marker}</span>
+              ) : (
+                <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-violet-400" />
+              )}
+              {item}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  )
+}
 
 function DifficultyDimensions({ dimensions }: { dimensions: NonNullable<Prerequisites['difficultyDimensions']> }) {
   return (
