@@ -1,14 +1,16 @@
 import { prisma } from '@/lib/prisma'
-import { cleanupExpiredGuides } from '@/lib/cleanup'
+import { auth } from '@/lib/auth'
 import GuideCard from '@/components/GuideCard'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
 export default async function GuidesPage() {
-  // cleanupExpiredGuides().catch(() => {})
+  const session = await auth()
+  const userId = session?.user?.id ?? null
 
   const guides = await prisma.guide.findMany({
+    where: userId ? { userId } : { userId: null },
     orderBy: { createdAt: 'desc' },
     select: {
       id: true,

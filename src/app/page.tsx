@@ -23,6 +23,7 @@ export default async function Home() {
 
   const [recentGuides, userUsage] = await Promise.all([
     prisma.guide.findMany({
+      where: userId ? { userId } : { userId: null },
       orderBy: { createdAt: 'desc' },
       take: 3,
       select: {
