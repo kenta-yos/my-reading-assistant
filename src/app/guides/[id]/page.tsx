@@ -465,7 +465,7 @@ function BulletCard({ label, items, marker }: { label?: string; items: string | 
         {list.map((item, i) => (
           <li key={i} className="flex items-start gap-2.5 text-[15px] leading-relaxed text-stone-800 dark:text-stone-200">
             {marker ? (
-              <span className="mt-0.5 flex-shrink-0 text-lg font-medium text-indigo-500 dark:text-indigo-400">{marker}</span>
+              <span className="flex-shrink-0 font-medium text-indigo-500 dark:text-indigo-400">{marker}</span>
             ) : (
               <span className="mt-2.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-indigo-300 dark:bg-indigo-500" />
             )}
