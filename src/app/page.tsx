@@ -60,7 +60,9 @@ export default async function Home() {
               きみの好奇心に、<br className="sm:hidden" />最高のブーストを
             </h1>
             <p className="mt-2 text-xs leading-relaxed text-indigo-200 sm:text-sm">
-              本のタイトルや気になるネット記事のURLを入れるだけで、何が書いてあるか、自分に読めるか、読むために何を知っておくべきか——ルカが読書の準備をまるごとサポートします
+              どんな内容なんだろう...？難しそうだけど読めるかな...？
+              <br />
+              そんなときは、本のタイトルや気になるネット記事のURLを入れるだけで、ルカが読書の準備をまるごとサポートしてくれます。
             </p>
           </div>
         </div>
