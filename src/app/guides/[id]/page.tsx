@@ -433,7 +433,7 @@ export default async function GuidePage({
                 <div className="h-0.5 bg-rose-400" />
                 <div className="p-5">
                   <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-stone-400">
-                    思考の枠組み・知的系譜
+                    知的背景
                   </p>
                   <p className="leading-relaxed text-stone-900 dark:text-stone-100">
                     {prereqs.intellectualLineage}
