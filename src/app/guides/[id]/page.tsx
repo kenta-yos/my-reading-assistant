@@ -275,7 +275,7 @@ export default async function GuidePage({
                 {prereqs.difficultyBarriers && prereqs.difficultyBarriers.length > 0 && (
                   <div>
                     <p className="mb-2 text-xs font-semibold text-stone-500 dark:text-stone-400">
-                      読む上でぶつかる壁
+                      ここだけ気をつけて
                     </p>
                     <ul className="space-y-1.5">
                       {prereqs.difficultyBarriers.map((item, i) => (
