@@ -425,7 +425,7 @@ export default async function GuidePage({
         </p>
 
         <div className="rounded-2xl bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-6 shadow-sm ring-1 ring-indigo-100/80 dark:from-indigo-950/30 dark:via-stone-900 dark:to-violet-950/20 dark:ring-indigo-800/30 sm:p-8">
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center gap-4">
             <Image
               src="/ken_blue.png"
               alt="Kenta"
@@ -446,10 +446,10 @@ export default async function GuidePage({
               </a>
             </div>
           </div>
-          <p className="mt-4 text-center text-sm leading-relaxed text-stone-600 dark:text-stone-400">
+          <p className="mt-4 text-sm leading-relaxed text-stone-600 dark:text-stone-400">
             サービスの運営にはAIのAPI利用料がかかっています。もしLukaが役に立ったら、応援していただけるととても嬉しいです。
           </p>
-          <div className="mt-4 text-center">
+          <div className="mt-4">
             <a
               href="https://ofuse.me/bdd35efd"
               target="_blank"
