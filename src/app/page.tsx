@@ -138,15 +138,16 @@ export default async function Home() {
             className="flex-shrink-0 rounded-full"
           />
           <div>
+            <p className="font-bold text-stone-900 dark:text-stone-50">Kenta</p>
+            <p className="text-xs text-stone-500 dark:text-stone-400">学術と日常をつなぐ</p>
             <a
               href="https://linktr.ee/ken_book_lover"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-bold text-stone-900 transition hover:text-indigo-600 dark:text-stone-50 dark:hover:text-indigo-400"
+              className="mt-1 inline-block text-xs font-medium text-indigo-600 transition hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
             >
-              Kenta
+              SNS・プロフィール →
             </a>
-            <p className="text-xs text-stone-500 dark:text-stone-400">学術と日常をつなぐ</p>
           </div>
         </div>
         <p className="mt-4 text-sm leading-relaxed text-stone-600 dark:text-stone-400">
