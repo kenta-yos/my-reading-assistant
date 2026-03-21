@@ -133,7 +133,6 @@ export default async function GuidePage({
     prereqs?.terminology?.length > 0 && { id: 'terminology', label: '用語' },
     prereqs?.domainContext && { id: 'context', label: 'コンテクスト' },
     prereqs?.highSchoolBasics?.length > 0 && { id: 'basics', label: '基礎知識' },
-    (prereqs?.aboutAuthor || prereqs?.intellectualLineage) && { id: 'author', label: '著者' },
     (prereqs?.recommendedResources?.length || prereqs?.ndlSearchQueries?.length) && { id: 'books', label: '関連書籍' },
   ].filter(Boolean) as { id: string; label: string }[]
 
@@ -197,6 +196,15 @@ export default async function GuidePage({
                 全体像
               </p>
               <p className="leading-relaxed text-stone-900 dark:text-stone-100">{guide.summary}</p>
+            </div>
+          )}
+
+          {prereqs?.aboutAuthor && (
+            <div className="mt-5 border-t border-stone-100 pt-5 dark:border-stone-800">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-stone-400">
+                著者について
+              </p>
+              <p className="text-sm leading-relaxed text-stone-700 dark:text-stone-300">{prereqs.aboutAuthor}</p>
             </div>
           )}
         </div>
@@ -410,41 +418,10 @@ export default async function GuidePage({
         </Section>
       )}
 
-      {/* Section 04 — 著者・知的系譜 */}
-      {(prereqs?.aboutAuthor || prereqs?.intellectualLineage) && (
-        <Section id="author" number="04" title="著者" accent="rose">
-          <div className="space-y-3">
-            {prereqs.aboutAuthor && (
-              <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
-                <div className="h-0.5 bg-rose-400" />
-                <div className="p-5">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-stone-400">
-                    著者について
-                  </p>
-                  <p className="leading-relaxed text-stone-900 dark:text-stone-100">{prereqs.aboutAuthor}</p>
-                </div>
-              </div>
-            )}
-            {prereqs.intellectualLineage && (
-              <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
-                <div className="h-0.5 bg-rose-400" />
-                <div className="p-5">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-stone-400">
-                    知的背景
-                  </p>
-                  <p className="leading-relaxed text-stone-900 dark:text-stone-100">
-                    {prereqs.intellectualLineage}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </Section>
-      )}
 
       {/* Section 05 — 関連書籍 */}
       {(prereqs?.recommendedResources?.length || prereqs?.ndlSearchQueries?.length) && (
-        <Section id="books" number="05" title="関連書籍" accent="cyan">
+        <Section id="books" number="04" title="関連書籍" accent="cyan">
           {prereqs.recommendedResources && prereqs.recommendedResources.length > 0 ? (
             (() => {
               const introBooks = prereqs.recommendedResources!.filter(b => b.category === '入門')
