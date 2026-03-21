@@ -61,6 +61,12 @@ export default function UserMenu() {
           <p className="px-3 py-2 text-xs text-stone-500 dark:text-stone-400 truncate">
             {session.user?.email}
           </p>
+          <a
+            href="/bookmarks"
+            className="block rounded-lg px-3 py-2 text-sm text-stone-700 transition hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800"
+          >
+            ★ ブックマーク
+          </a>
           <button
             onClick={() => signOut()}
             className="w-full rounded-lg px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800"
