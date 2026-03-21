@@ -25,7 +25,7 @@ export default function LandingPage() {
           <h1 className="mt-6 text-2xl font-extrabold tracking-tight text-white sm:text-4xl">
             その本、読む前に
             <br />
-            <span className="text-indigo-300">ルカに相談してみて。</span>
+            <span className="text-indigo-300">ルカに相談してみて</span>
           </h1>
           <p className="mx-auto mt-4 px-4 text-xs leading-relaxed text-indigo-200/80 sm:px-0 sm:text-base">
             本のタイトルを入れるだけで、
