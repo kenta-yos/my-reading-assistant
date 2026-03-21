@@ -120,17 +120,11 @@ export default async function GuidePage({
     minute: '2-digit',
   })
 
-  const hasJudgmentPhase =
-    prereqs?.problemFocus ||
-    prereqs?.coreQuestions?.length ||
-    prereqs?.uniqueness ||
-    prereqs?.postReadingOutcome ||
-    prereqs?.difficultyExplanation ||
-    prereqs?.prerequisiteKnowledge?.length
-
   const sections = [
-    hasJudgmentPhase && { id: 'judgment', label: '判断' },
-    prereqs?.terminology?.length > 0 && { id: 'terminology', label: '用語' },
+    (prereqs?.problemFocus || prereqs?.coreQuestions?.length) && { id: 'questions', label: '問い' },
+    (prereqs?.uniqueness || prereqs?.postReadingOutcome) && { id: 'value', label: '読む価値' },
+    (difficulty || prereqs?.difficultyBarriers?.length) && { id: 'difficulty', label: '難易度' },
+    prereqs?.terminology?.length > 0 && { id: 'terminology', label: 'キーワード' },
     prereqs?.domainContext && { id: 'context', label: 'コンテクスト' },
     prereqs?.highSchoolBasics?.length > 0 && { id: 'basics', label: '基礎知識' },
     (prereqs?.recommendedResources?.length || prereqs?.ndlSearchQueries?.length) && { id: 'books', label: '関連書籍' },
@@ -212,104 +206,97 @@ export default async function GuidePage({
 
       <SectionNav sections={sections} />
 
-      {/* ━━ 判断フェーズ ━━ */}
-      {hasJudgmentPhase && (
-        <div id="judgment" className="scroll-mt-24 space-y-8 sm:space-y-10">
-          <PhaseHeader step={1} title="判断フェーズ" subtitle="この本を読むべきかを見極める" />
-
-          {/* 問題関心 */}
+      {/* この本が扱う問い */}
+      {(prereqs?.problemFocus || (prereqs?.coreQuestions && prereqs.coreQuestions.length > 0)) && (
+        <section id="questions" className="scroll-mt-24 space-y-4">
           {prereqs.problemFocus && (
             <JudgmentCard label="問題関心" items={prereqs.problemFocus} />
           )}
-
-          {/* この本が答えようとしている問い */}
           {prereqs.coreQuestions && prereqs.coreQuestions.length > 0 && (
             <JudgmentCard label="この本が答えようとしている問い" items={prereqs.coreQuestions} marker="?" />
           )}
+        </section>
+      )}
 
-          {/* この本ならではの独自性 */}
+      {/* 読む価値 */}
+      {(prereqs?.uniqueness || prereqs?.postReadingOutcome) && (
+        <section id="value" className="scroll-mt-24 space-y-4">
           {prereqs.uniqueness && (
             <JudgmentCard label="本書のオリジナリティ" items={prereqs.uniqueness} />
           )}
-
-          {/* この本で得られる体験 */}
           {prereqs.postReadingOutcome && (
             <JudgmentCard label="この本で得られる体験" items={prereqs.postReadingOutcome} />
           )}
-
-          {/* 難易度 */}
-          {(difficulty || prereqs.difficultyExplanation) && (
-            <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
-              <div className="h-0.5 bg-violet-400" />
-              <div className="p-5 space-y-4">
-                <p className="text-xs font-semibold uppercase tracking-widest text-violet-500 dark:text-violet-400">
-                  難易度
-                </p>
-                {difficulty && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3">
-                      <span className={`rounded-full px-3 py-1 text-sm font-semibold ${difficulty.className}`}>
-                        {difficulty.label}
-                      </span>
-                      {typeof prereqs.difficultyLevel === 'number' && (
-                        <div className="flex gap-1">
-                          {[1, 2, 3, 4, 5].map((n) => (
-                            <div
-                              key={n}
-                              className={`h-2 w-5 rounded-full ${
-                                n <= Number(prereqs.difficultyLevel)
-                                  ? 'bg-violet-400'
-                                  : 'bg-stone-200 dark:bg-stone-700'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    {difficulty.audience && (
-                      <p className="text-sm text-stone-600 dark:text-stone-400">
-                        {difficulty.audience}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {/* 旧5軸内訳（後方互換） */}
-                {prereqs.difficultyDimensions && !prereqs.difficultyBarriers && (
-                  <DifficultyDimensions dimensions={prereqs.difficultyDimensions} />
-                )}
-
-                {/* 読む上でぶつかる壁 */}
-                {prereqs.difficultyBarriers && prereqs.difficultyBarriers.length > 0 && (
-                  <div>
-                    <ul className="space-y-1.5">
-                      {prereqs.difficultyBarriers.map((item, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm leading-relaxed text-stone-700 dark:text-stone-300">
-                          <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-violet-400" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {prereqs.difficultyExplanation && (
-                  <p className="text-sm leading-relaxed text-stone-700 dark:text-stone-300">
-                    {prereqs.difficultyExplanation}
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+        </section>
       )}
 
-      {/* ━━ 準備フェーズ ━━ */}
-      <PhaseHeader step={2} title="準備フェーズ" subtitle="読むための土台をつくる" />
+      {/* 難易度 */}
+      {(difficulty || prereqs?.difficultyBarriers?.length) && (
+        <section id="difficulty" className="scroll-mt-24">
+          <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
+            <div className="h-0.5 bg-amber-400" />
+            <div className="p-5 space-y-4">
+              <p className="text-xs font-semibold uppercase tracking-widest text-amber-600 dark:text-amber-400">
+                難易度
+              </p>
+              {difficulty && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <span className={`rounded-full px-3 py-1 text-sm font-semibold ${difficulty.className}`}>
+                      {difficulty.label}
+                    </span>
+                    {typeof prereqs.difficultyLevel === 'number' && (
+                      <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <div
+                            key={n}
+                            className={`h-2 w-5 rounded-full ${
+                              n <= Number(prereqs.difficultyLevel)
+                                ? 'bg-amber-400'
+                                : 'bg-stone-200 dark:bg-stone-700'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {difficulty.audience && (
+                    <p className="text-sm text-stone-600 dark:text-stone-400">
+                      {difficulty.audience}
+                    </p>
+                  )}
+                </div>
+              )}
 
-      {/* Section 01 — 専門用語 */}
+              {/* 旧5軸内訳（後方互換） */}
+              {prereqs?.difficultyDimensions && !prereqs?.difficultyBarriers && (
+                <DifficultyDimensions dimensions={prereqs.difficultyDimensions} />
+              )}
+
+              {prereqs?.difficultyBarriers && prereqs.difficultyBarriers.length > 0 && (
+                <ul className="space-y-1.5">
+                  {prereqs.difficultyBarriers.map((item, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm leading-relaxed text-stone-700 dark:text-stone-300">
+                      <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-amber-400" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {prereqs?.difficultyExplanation && (
+                <p className="text-sm leading-relaxed text-stone-700 dark:text-stone-300">
+                  {prereqs.difficultyExplanation}
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 関連キーワード */}
       {prereqs?.terminology?.length > 0 && (
-        <Section id="terminology" number="01" title="関連キーワード" accent="indigo">
+        <Section id="terminology" title="関連キーワード" accent="indigo">
           <div className="grid gap-3 sm:grid-cols-2">
             {prereqs.terminology.map((item, i) => (
               <div
@@ -331,7 +318,7 @@ export default async function GuidePage({
 
       {/* Section 02 — 領域のコンテクスト */}
       {prereqs?.domainContext && (
-        <Section id="context" number="02" title="この領域のコンテクスト" accent="teal">
+        <Section id="context" title="この領域のコンテクスト" accent="teal">
           <div className="space-y-3">
             {prereqs.domainContext.overview && (
               <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
@@ -393,7 +380,7 @@ export default async function GuidePage({
 
       {/* Section 03 — 高校レベル基礎知識 */}
       {prereqs?.highSchoolBasics?.length > 0 && (
-        <Section id="basics" number="03" title="高校レベルで押さえておきたい基礎知識" accent="amber">
+        <Section id="basics" title="高校レベルで押さえておきたい基礎知識" accent="amber">
           <div className="space-y-3">
             {prereqs.highSchoolBasics.map((item, i) => (
               <div
@@ -421,7 +408,7 @@ export default async function GuidePage({
 
       {/* Section 05 — 関連書籍 */}
       {(prereqs?.recommendedResources?.length || prereqs?.ndlSearchQueries?.length) && (
-        <Section id="books" number="04" title="関連書籍" accent="cyan">
+        <Section id="books" title="関連書籍" accent="cyan">
           {prereqs.recommendedResources && prereqs.recommendedResources.length > 0 ? (
             (() => {
               const introBooks = prereqs.recommendedResources!.filter(b => b.category === '入門')
@@ -580,30 +567,13 @@ function BookCard({ book, accent }: { book: Prerequisites['recommendedResources'
   )
 }
 
-function PhaseHeader({ step, title, subtitle }: { step: number; title: string; subtitle: string }) {
-  return (
-    <div className="flex items-center gap-3">
-      <div className="flex h-10 w-10 flex-shrink-0 flex-col items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/30">
-        <span className="text-[10px] font-bold uppercase leading-none text-violet-700 dark:text-violet-300">Step</span>
-        <span className="text-sm font-bold leading-tight text-violet-700 dark:text-violet-300">{step}</span>
-      </div>
-      <div>
-        <p className="text-base font-bold text-stone-700 dark:text-stone-300">{title}</p>
-        <p className="text-sm text-stone-500 dark:text-stone-400">{subtitle}</p>
-      </div>
-    </div>
-  )
-}
-
 function Section({
   id,
-  number,
   title,
   accent,
   children,
 }: {
   id?: string
-  number: string
   title: string
   accent: AccentColor
   children: React.ReactNode
@@ -611,9 +581,7 @@ function Section({
   return (
     <section id={id} className="scroll-mt-24 space-y-4">
       <div className="flex items-center gap-2.5">
-        <span className={`rounded-md px-2 py-0.5 font-mono text-xs font-bold ${badgeStyle[accent]}`}>
-          {number}
-        </span>
+        <div className={`h-4 w-1 rounded-full ${accentTopBar[accent]}`} />
         <h2 className="text-base font-bold text-stone-900 dark:text-stone-50 sm:text-lg">{title}</h2>
       </div>
       {children}
