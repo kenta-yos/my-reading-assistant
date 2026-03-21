@@ -117,8 +117,10 @@ export default async function GuidePage({
   })
 
   const sections = [
-    (prereqs?.problemFocus || prereqs?.coreQuestions?.length) && { id: 'questions', label: '問い' },
-    (prereqs?.uniqueness || prereqs?.postReadingOutcome) && { id: 'value', label: '読む価値' },
+    prereqs?.problemFocus && { id: 'focus', label: '問題関心' },
+    prereqs?.coreQuestions?.length && { id: 'questions', label: '問い' },
+    prereqs?.uniqueness && { id: 'uniqueness', label: 'オリジナリティ' },
+    prereqs?.postReadingOutcome && { id: 'outcome', label: '得られる体験' },
     (difficulty || prereqs?.difficultyBarriers?.length) && { id: 'difficulty', label: '難易度' },
     prereqs?.terminology?.length > 0 && { id: 'terminology', label: 'キーワード' },
     prereqs?.domainContext && { id: 'context', label: 'コンテクスト' },
@@ -189,27 +191,35 @@ export default async function GuidePage({
 
       <SectionNav sections={sections} />
 
-      {/* この本が扱う問い */}
-      {(prereqs?.problemFocus || (prereqs?.coreQuestions && prereqs.coreQuestions.length > 0)) && (
-        <section id="questions" className="scroll-mt-24 space-y-6">
-          {prereqs.problemFocus && (
-            <BulletCard label="問題関心" items={prereqs.problemFocus} />
-          )}
-          {prereqs.coreQuestions && prereqs.coreQuestions.length > 0 && (
-            <BulletCard label="この本が答えようとしている問い" items={prereqs.coreQuestions} marker="?" />
-          )}
+      {/* 問題関心 */}
+      {prereqs?.problemFocus && (
+        <section id="focus" className="scroll-mt-24 space-y-4">
+          <SectionHeading title="問題関心" />
+          <BulletCard items={prereqs.problemFocus} />
         </section>
       )}
 
-      {/* 読む価値 */}
-      {(prereqs?.uniqueness || prereqs?.postReadingOutcome) && (
-        <section id="value" className="scroll-mt-24 space-y-6">
-          {prereqs.uniqueness && (
-            <BulletCard label="本書のオリジナリティ" items={prereqs.uniqueness} />
-          )}
-          {prereqs.postReadingOutcome && (
-            <BulletCard label="この本で得られる体験" items={prereqs.postReadingOutcome} />
-          )}
+      {/* この本が答えようとしている問い */}
+      {prereqs?.coreQuestions && prereqs.coreQuestions.length > 0 && (
+        <section id="questions" className="scroll-mt-24 space-y-4">
+          <SectionHeading title="この本が答えようとしている問い" />
+          <BulletCard items={prereqs.coreQuestions} marker="?" />
+        </section>
+      )}
+
+      {/* 本書のオリジナリティ */}
+      {prereqs?.uniqueness && (
+        <section id="uniqueness" className="scroll-mt-24 space-y-4">
+          <SectionHeading title="本書のオリジナリティ" />
+          <BulletCard items={prereqs.uniqueness} />
+        </section>
+      )}
+
+      {/* この本で得られる体験 */}
+      {prereqs?.postReadingOutcome && (
+        <section id="outcome" className="scroll-mt-24 space-y-4">
+          <SectionHeading title="この本で得られる体験" />
+          <BulletCard items={prereqs.postReadingOutcome} />
         </section>
       )}
 
@@ -217,7 +227,7 @@ export default async function GuidePage({
       {(difficulty || prereqs?.difficultyBarriers?.length) && (
         <section id="difficulty" className="scroll-mt-24 space-y-4">
           <SectionHeading title="難易度" />
-          <div className="space-y-4">
+          <div className="rounded-xl border border-stone-200 bg-white p-5 space-y-4 dark:border-stone-700 dark:bg-stone-900">
             {difficulty && (
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
@@ -296,7 +306,7 @@ export default async function GuidePage({
       {prereqs?.domainContext && (
         <section id="context" className="scroll-mt-24 space-y-4">
           <SectionHeading title="この領域のコンテクスト" />
-          <div className="space-y-4">
+          <div className="rounded-xl border border-stone-200 bg-white p-5 space-y-4 dark:border-stone-700 dark:bg-stone-900">
             {prereqs.domainContext.overview && (
               <p className="text-[15px] leading-relaxed text-stone-700 dark:text-stone-300">
                 {prereqs.domainContext.overview}
@@ -427,13 +437,15 @@ function SectionHeading({ title }: { title: string }) {
   )
 }
 
-function BulletCard({ label, items, marker }: { label: string; items: string | string[]; marker?: string }) {
+function BulletCard({ label, items, marker }: { label?: string; items: string | string[]; marker?: string }) {
   const list = Array.isArray(items) ? items : [items]
   return (
-    <div className="space-y-3">
-      <p className="text-xs font-semibold uppercase tracking-widest text-stone-400 dark:text-stone-500">
-        {label}
-      </p>
+    <div className="rounded-xl border border-stone-200 bg-white p-5 dark:border-stone-700 dark:bg-stone-900">
+      {label && (
+        <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-stone-400 dark:text-stone-500">
+          {label}
+        </p>
+      )}
       <ul className="space-y-2">
         {list.map((item, i) => (
           <li key={i} className="flex items-start gap-2.5 text-[15px] leading-relaxed text-stone-800 dark:text-stone-200">
