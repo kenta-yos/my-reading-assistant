@@ -73,6 +73,17 @@ export default function UserMenu() {
           >
             ログアウト
           </button>
+          <div className="my-1 h-px bg-stone-100 dark:bg-stone-800" />
+          <button
+            onClick={async () => {
+              if (!confirm('本当に退会しますか？アカウントとブックマークが削除されます。この操作は取り消せません。')) return
+              await fetch('/api/account/delete', { method: 'DELETE' })
+              signOut()
+            }}
+            className="w-full rounded-lg px-3 py-2 text-left text-xs text-stone-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+          >
+            退会する
+          </button>
         </div>
       )}
     </div>
