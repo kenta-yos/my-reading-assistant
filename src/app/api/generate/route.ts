@@ -14,6 +14,8 @@ const GLOBAL_DAILY_LIMIT = 200
 // ユーザー別上限
 const USER_DAILY_LIMIT = 5
 const ANON_DAILY_LIMIT = 2
+// 管理者メール（上限なし）
+const ADMIN_EMAILS = ['key21.ring.a.bell@gmail.com']
 
 // JST（UTC+9）の今日の日付を返す
 function getTodayJST(): string {
@@ -152,8 +154,11 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // 管理者は上限なし
+  const isAdmin = ADMIN_EMAILS.includes(session?.user?.email ?? '')
+
   // ユーザー別の上限
-  if (userId) {
+  if (userId && !isAdmin) {
     const userUsage = await prisma.userUsage.findUnique({
       where: { userId_date: { userId, date: today } },
     })
@@ -163,7 +168,7 @@ export async function POST(request: NextRequest) {
         { status: 429 }
       )
     }
-  } else {
+  } else if (!userId) {
     // 未ログインはIPベースでなくcookie/セッションなしのため、全体のanon枠で制限
     // 簡易的に全体のanon使用量で管理
     const anonUsage = await prisma.userUsage.findUnique({
