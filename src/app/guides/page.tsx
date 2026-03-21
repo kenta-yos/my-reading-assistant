@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
-import GuideCard from '@/components/GuideCard'
+import GuideList from './GuideList'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -21,6 +21,21 @@ export default async function GuidesPage() {
       createdAt: true,
     },
   })
+
+  // ログインユーザーのブックマーク済みガイドIDを取得
+  let bookmarkedIds: Set<string> = new Set()
+  if (userId) {
+    const bookmarks = await prisma.bookmark.findMany({
+      where: { userId },
+      select: { guideId: true },
+    })
+    bookmarkedIds = new Set(bookmarks.map((b) => b.guideId))
+  }
+
+  const guidesWithBookmark = guides.map((g) => ({
+    ...g,
+    bookmarked: bookmarkedIds.has(g.id),
+  }))
 
   return (
     <div className="space-y-6">
@@ -49,11 +64,7 @@ export default async function GuidesPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {guides.map((guide) => (
-            <GuideCard key={guide.id} {...guide} />
-          ))}
-        </div>
+        <GuideList guides={guidesWithBookmark} isLoggedIn={!!userId} />
       )}
     </div>
   )

@@ -8,6 +8,7 @@ type GuideCardProps = {
   summary: string
   createdAt: Date | string
   compact?: boolean
+  bookmarked?: boolean
 }
 
 function formatDateTimeJST(date: Date | string): string {
@@ -41,15 +42,21 @@ export default function GuideCard({
   inputType,
   summary,
   createdAt,
+  bookmarked,
 }: GuideCardProps) {
   return (
     <Link href={`/guides/${id}`} className="group block">
       <article className="h-full overflow-hidden rounded-xl border border-stone-200 bg-white transition hover:border-indigo-300 hover:shadow-sm dark:border-stone-700 dark:bg-stone-900">
         <div className="h-0.5 bg-indigo-500 opacity-0 transition group-hover:opacity-100" />
         <div className="p-5">
-          <p className="mb-2.5 text-xs text-stone-500">
-            {inputTypeLabel(inputType)} · {formatDateTimeJST(createdAt)}
-          </p>
+          <div className="mb-2.5 flex items-center justify-between">
+            <p className="text-xs text-stone-500">
+              {inputTypeLabel(inputType)} · {formatDateTimeJST(createdAt)}
+            </p>
+            {bookmarked && (
+              <span className="text-xs text-amber-500">★</span>
+            )}
+          </div>
           <h3 className="mb-2 line-clamp-2 font-semibold text-stone-950 transition group-hover:text-indigo-700 dark:text-stone-100 dark:group-hover:text-indigo-400">
             {title}
           </h3>
