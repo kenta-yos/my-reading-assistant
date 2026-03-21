@@ -5,13 +5,24 @@ import DeleteButton from './DeleteButton'
 import SectionNav from '@/components/SectionNav'
 import RecommendButton from '@/components/RecommendButton'
 import ShareButton from '@/components/ShareButton'
+import QuizItem from './QuizItem'
 
 type Prerequisites = {
   // 判断フェーズ
   problemFocus?: string
+  coreQuestions?: string[]
+  uniqueness?: string
   postReadingOutcome?: string
   difficultyLevel: number | 'beginner' | 'intermediate' | 'advanced'
+  difficultyDimensions?: {
+    vocabulary: number
+    concepts: number
+    formality: number
+    volume: number
+    culturalContext: number
+  }
   difficultyExplanation?: string
+  selfCheckQuiz?: { question: string; answer: string; topic: string }[]
   prerequisiteKnowledge?: string[]
   // 準備フェーズ
   terminology: { term: string; definition: string }[]
@@ -80,6 +91,8 @@ export default async function GuidePage({
 
   const hasJudgmentPhase =
     prereqs?.problemFocus ||
+    prereqs?.coreQuestions?.length ||
+    prereqs?.uniqueness ||
     prereqs?.postReadingOutcome ||
     prereqs?.difficultyExplanation ||
     prereqs?.prerequisiteKnowledge?.length
@@ -180,6 +193,41 @@ export default async function GuidePage({
             </div>
           )}
 
+          {/* この本が答えようとしている問い */}
+          {prereqs.coreQuestions && prereqs.coreQuestions.length > 0 && (
+            <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
+              <div className="h-0.5 bg-violet-400" />
+              <div className="p-5">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-violet-500 dark:text-violet-400">
+                  この本が答えようとしている問い
+                </p>
+                <ul className="space-y-2">
+                  {prereqs.coreQuestions.map((q, i) => (
+                    <li key={i} className="flex items-start gap-2.5 leading-relaxed text-stone-900 dark:text-stone-100">
+                      <span className="mt-0.5 flex-shrink-0 text-violet-400 dark:text-violet-500">?</span>
+                      {q}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* この本ならではの独自性 */}
+          {prereqs.uniqueness && (
+            <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
+              <div className="h-0.5 bg-violet-400" />
+              <div className="p-5">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-violet-500 dark:text-violet-400">
+                  似た本との違い
+                </p>
+                <p className="leading-relaxed text-stone-900 dark:text-stone-100">
+                  {prereqs.uniqueness}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* 読後の変化 */}
           {prereqs.postReadingOutcome && (
             <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
@@ -224,6 +272,12 @@ export default async function GuidePage({
                     )}
                   </div>
                 )}
+
+                {/* 難易度の5軸内訳 */}
+                {prereqs.difficultyDimensions && (
+                  <DifficultyDimensions dimensions={prereqs.difficultyDimensions} />
+                )}
+
                 {prereqs.difficultyExplanation && (
                   <p className="text-sm leading-relaxed text-stone-700 dark:text-stone-300">
                     {prereqs.difficultyExplanation}
@@ -244,6 +298,28 @@ export default async function GuidePage({
                     </ul>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* セルフチェッククイズ */}
+          {prereqs.selfCheckQuiz && prereqs.selfCheckQuiz.length > 0 && (
+            <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
+              <div className="h-0.5 bg-violet-400" />
+              <div className="p-5 space-y-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-violet-500 dark:text-violet-400">
+                    読む準備ができているかチェック
+                  </p>
+                  <p className="mt-1 text-xs text-stone-400 dark:text-stone-500">
+                    以下の問いに答えられるか試してみてください。答えを見るにはタップしてください。
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  {prereqs.selfCheckQuiz.map((item, i) => (
+                    <QuizItem key={i} index={i} question={item.question} answer={item.answer} topic={item.topic} />
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -595,5 +671,41 @@ function Section({
       </div>
       {children}
     </section>
+  )
+}
+
+const dimensionLabels: { key: string; label: string; description: string }[] = [
+  { key: 'vocabulary', label: '専門用語', description: '専門用語の難しさ' },
+  { key: 'concepts', label: '概念の抽象度', description: '理論・概念の抽象度' },
+  { key: 'formality', label: '数式・形式性', description: '数式・論理記号の多さ' },
+  { key: 'volume', label: '分量・密度', description: '分量と情報密度' },
+  { key: 'culturalContext', label: '文化的前提', description: '特定文化圏の知識の必要度' },
+]
+
+function DifficultyDimensions({ dimensions }: { dimensions: NonNullable<Prerequisites['difficultyDimensions']> }) {
+  return (
+    <div className="space-y-2">
+      {dimensionLabels.map(({ key, label }) => {
+        const value = dimensions[key as keyof typeof dimensions] ?? 0
+        return (
+          <div key={key} className="flex items-center gap-3">
+            <span className="w-24 flex-shrink-0 text-xs text-stone-500 dark:text-stone-400">{label}</span>
+            <div className="flex flex-1 gap-1">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <div
+                  key={n}
+                  className={`h-1.5 flex-1 rounded-full ${
+                    n <= value
+                      ? 'bg-violet-400'
+                      : 'bg-stone-200 dark:bg-stone-700'
+                  }`}
+                />
+              ))}
+            </div>
+            <span className="w-5 text-right text-xs font-medium text-stone-500 dark:text-stone-400">{value}</span>
+          </div>
+        )
+      })}
+    </div>
   )
 }
