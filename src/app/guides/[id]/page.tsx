@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
 import DeleteButton from './DeleteButton'
 import SectionNav from '@/components/SectionNav'
@@ -423,18 +424,41 @@ export default async function GuidePage({
           AIが生成したコンテンツです。誤った情報が含まれている可能性もありますので、あくまでも参考情報としてご利用ください。
         </p>
 
-        <div className="rounded-2xl bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-8 text-center shadow-sm ring-1 ring-indigo-100/80 dark:from-indigo-950/30 dark:via-stone-900 dark:to-violet-950/20 dark:ring-indigo-800/30">
-          <p className="text-sm leading-relaxed text-stone-600 dark:text-stone-400">
+        <div className="rounded-2xl bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-6 shadow-sm ring-1 ring-indigo-100/80 dark:from-indigo-950/30 dark:via-stone-900 dark:to-violet-950/20 dark:ring-indigo-800/30 sm:p-8">
+          <div className="flex items-center justify-center gap-4">
+            <Image
+              src="/ken_blue.png"
+              alt="Kenta"
+              width={48}
+              height={48}
+              className="flex-shrink-0 rounded-full"
+            />
+            <div className="text-left">
+              <p className="font-bold text-stone-900 dark:text-stone-50">Kenta</p>
+              <p className="text-xs text-stone-500 dark:text-stone-400">学術と日常をつなぐ</p>
+              <a
+                href="https://linktr.ee/ken_book_lover"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 inline-block text-xs font-medium text-indigo-600 transition hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
+              >
+                SNS・プロフィール →
+              </a>
+            </div>
+          </div>
+          <p className="mt-4 text-center text-sm leading-relaxed text-stone-600 dark:text-stone-400">
             サービスの運営にはAIのAPI利用料がかかっています。もしLukaが役に立ったら、応援していただけるととても嬉しいです。
           </p>
-          <a
-            href="https://ofuse.me/bdd35efd"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-4 inline-block rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-indigo-500/20 transition hover:from-indigo-700 hover:to-indigo-600 hover:shadow-lg hover:shadow-indigo-500/30 dark:from-indigo-500 dark:to-indigo-400"
-          >
-            コーヒー1杯分の応援をする
-          </a>
+          <div className="mt-4 text-center">
+            <a
+              href="https://ofuse.me/bdd35efd"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-indigo-500/20 transition hover:from-indigo-700 hover:to-indigo-600 hover:shadow-lg hover:shadow-indigo-500/30 dark:from-indigo-500 dark:to-indigo-400"
+            >
+              コーヒー1杯分の応援をする
+            </a>
+          </div>
         </div>
       </footer>
     </div>
