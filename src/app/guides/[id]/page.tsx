@@ -52,8 +52,8 @@ type Prerequisites = {
     volume: number
     culturalContext: number
   }
+  difficultyBarriers?: string[]
   difficultyExplanation?: string
-  selfCheckQuiz?: { question: string; answer: string; topic: string }[]
   prerequisiteKnowledge?: string[]
   // 準備フェーズ
   terminology: { term: string; definition: string }[]
@@ -266,9 +266,26 @@ export default async function GuidePage({
                   </div>
                 )}
 
-                {/* 難易度の5軸内訳 */}
-                {prereqs.difficultyDimensions && (
+                {/* 旧5軸内訳（後方互換） */}
+                {prereqs.difficultyDimensions && !prereqs.difficultyBarriers && (
                   <DifficultyDimensions dimensions={prereqs.difficultyDimensions} />
+                )}
+
+                {/* 読む上でぶつかる壁 */}
+                {prereqs.difficultyBarriers && prereqs.difficultyBarriers.length > 0 && (
+                  <div>
+                    <p className="mb-2 text-xs font-semibold text-stone-500 dark:text-stone-400">
+                      読む上でぶつかる壁
+                    </p>
+                    <ul className="space-y-1.5">
+                      {prereqs.difficultyBarriers.map((item, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm leading-relaxed text-stone-700 dark:text-stone-300">
+                          <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-violet-400" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
 
                 {prereqs.difficultyExplanation && (
