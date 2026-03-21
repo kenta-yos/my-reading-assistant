@@ -304,7 +304,7 @@ export default async function GuidePage({
 
       {/* Section 01 — 専門用語 */}
       {prereqs?.terminology?.length > 0 && (
-        <Section id="terminology" number="01" title="この領域の専門用語" accent="indigo">
+        <Section id="terminology" number="01" title="関連キーワード" accent="indigo">
           <div className="grid gap-3 sm:grid-cols-2">
             {prereqs.terminology.map((item, i) => (
               <div
