@@ -5,7 +5,6 @@ import DeleteButton from './DeleteButton'
 import SectionNav from '@/components/SectionNav'
 import RecommendButton from '@/components/RecommendButton'
 import ShareButton from '@/components/ShareButton'
-import QuizItem from './QuizItem'
 
 type Prerequisites = {
   // 判断フェーズ
@@ -48,12 +47,12 @@ type Prerequisites = {
 }
 
 // 新5段階
-const numericDifficultyLabel: Record<number, { label: string; className: string }> = {
-  1: { label: '入門', className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' },
-  2: { label: '初級', className: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300' },
-  3: { label: '中級', className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' },
-  4: { label: '上級', className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' },
-  5: { label: '専門', className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
+const numericDifficultyLabel: Record<number, { label: string; audience: string; className: string }> = {
+  1: { label: '入門', audience: '予備知識なしで楽しめる', className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' },
+  2: { label: '初級', audience: '興味さえあれば読み進められる', className: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300' },
+  3: { label: '中級', audience: '大学の教養科目くらいの知識があると読みやすい', className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' },
+  4: { label: '上級', audience: 'この分野をある程度学んだことがある人向け', className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' },
+  5: { label: '専門', audience: '大学院・研究者・実務家向け', className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
 }
 
 // 旧3段階フォールバック
@@ -63,7 +62,7 @@ const legacyDifficultyLabel: Record<string, { label: string; className: string }
   advanced: { label: '上級', className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
 }
 
-function getDifficulty(level: number | string | undefined): { label: string; className: string } | null {
+function getDifficulty(level: number | string | undefined): { label: string; audience?: string; className: string } | null {
   if (level == null) return null
   if (typeof level === 'number') return numericDifficultyLabel[level] ?? null
   return legacyDifficultyLabel[level] ?? null
@@ -243,32 +242,39 @@ export default async function GuidePage({
             </div>
           )}
 
-          {/* 難易度・前提知識 */}
-          {(difficulty || prereqs.difficultyExplanation || prereqs.prerequisiteKnowledge?.length) && (
+          {/* 難易度 */}
+          {(difficulty || prereqs.difficultyExplanation) && (
             <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
               <div className="h-0.5 bg-violet-400" />
               <div className="p-5 space-y-4">
                 <p className="text-xs font-semibold uppercase tracking-widest text-violet-500 dark:text-violet-400">
-                  難易度・前提知識
+                  難易度
                 </p>
                 {difficulty && (
-                  <div className="flex items-center gap-3">
-                    <span className={`rounded-full px-3 py-1 text-sm font-semibold ${difficulty.className}`}>
-                      {difficulty.label}
-                    </span>
-                    {typeof prereqs.difficultyLevel === 'number' && (
-                      <div className="flex gap-1">
-                        {[1, 2, 3, 4, 5].map((n) => (
-                          <div
-                            key={n}
-                            className={`h-2 w-5 rounded-full ${
-                              n <= Number(prereqs.difficultyLevel)
-                                ? 'bg-violet-400'
-                                : 'bg-stone-200 dark:bg-stone-700'
-                            }`}
-                          />
-                        ))}
-                      </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <span className={`rounded-full px-3 py-1 text-sm font-semibold ${difficulty.className}`}>
+                        {difficulty.label}
+                      </span>
+                      {typeof prereqs.difficultyLevel === 'number' && (
+                        <div className="flex gap-1">
+                          {[1, 2, 3, 4, 5].map((n) => (
+                            <div
+                              key={n}
+                              className={`h-2 w-5 rounded-full ${
+                                n <= Number(prereqs.difficultyLevel)
+                                  ? 'bg-violet-400'
+                                  : 'bg-stone-200 dark:bg-stone-700'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {difficulty.audience && (
+                      <p className="text-sm text-stone-600 dark:text-stone-400">
+                        {difficulty.audience}
+                      </p>
                     )}
                   </div>
                 )}
@@ -283,43 +289,6 @@ export default async function GuidePage({
                     {prereqs.difficultyExplanation}
                   </p>
                 )}
-                {prereqs.prerequisiteKnowledge && prereqs.prerequisiteKnowledge.length > 0 && (
-                  <div>
-                    <p className="mb-2 text-xs font-semibold text-stone-500 dark:text-stone-400">
-                      必要な前提知識
-                    </p>
-                    <ul className="space-y-1.5">
-                      {prereqs.prerequisiteKnowledge.map((item, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-stone-700 dark:text-stone-300">
-                          <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-violet-400" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* セルフチェッククイズ */}
-          {prereqs.selfCheckQuiz && prereqs.selfCheckQuiz.length > 0 && (
-            <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
-              <div className="h-0.5 bg-violet-400" />
-              <div className="p-5 space-y-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest text-violet-500 dark:text-violet-400">
-                    読む準備ができているかチェック
-                  </p>
-                  <p className="mt-1 text-xs text-stone-400 dark:text-stone-500">
-                    以下の問いに答えられるか試してみてください。答えを見るにはタップしてください。
-                  </p>
-                </div>
-                <div className="space-y-3">
-                  {prereqs.selfCheckQuiz.map((item, i) => (
-                    <QuizItem key={i} index={i} question={item.question} answer={item.answer} topic={item.topic} />
-                  ))}
-                </div>
               </div>
             </div>
           )}
@@ -442,7 +411,7 @@ export default async function GuidePage({
 
       {/* Section 04 — 著者・知的系譜 */}
       {(prereqs?.aboutAuthor || prereqs?.intellectualLineage) && (
-        <Section id="author" number="04" title="著者と思想的背景" accent="rose">
+        <Section id="author" number="04" title="著者" accent="rose">
           <div className="space-y-3">
             {prereqs.aboutAuthor && (
               <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
