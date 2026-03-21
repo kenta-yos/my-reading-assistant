@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import Providers from '@/components/Providers'
 import UserMenu from '@/components/UserMenu'
+import NavLinks from '@/components/NavLinks'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -68,12 +69,7 @@ export default function RootLayout({
                 <span className="font-semibold text-stone-900 dark:text-stone-50">Luka</span>
               </Link>
               <div className="flex items-center gap-1">
-                <Link
-                  href="/guides"
-                  className="rounded-lg px-3 py-1.5 text-sm text-stone-500 transition hover:bg-stone-100 hover:text-stone-900 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100"
-                >
-                  ガイド一覧
-                </Link>
+                <NavLinks />
                 <UserMenu />
               </div>
             </div>
