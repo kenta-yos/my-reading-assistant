@@ -53,6 +53,7 @@ type Prerequisites = {
   }
   difficultyBarriers?: string[]
   difficultyExplanation?: string
+  recommendedFor?: string[]
   prerequisiteKnowledge?: string[]
   terminology: { term: string; definition: string }[]
   domainContext: {
@@ -117,11 +118,11 @@ export default async function GuidePage({
   })
 
   const sections = [
-    prereqs?.problemFocus && { id: 'focus', label: '問題関心' },
     prereqs?.coreQuestions?.length && { id: 'questions', label: '問い' },
     prereqs?.uniqueness && { id: 'uniqueness', label: 'オリジナリティ' },
     prereqs?.postReadingOutcome && { id: 'outcome', label: '得られる体験' },
     (difficulty || prereqs?.difficultyBarriers?.length) && { id: 'difficulty', label: '難易度' },
+    prereqs?.recommendedFor?.length && { id: 'recommended-for', label: 'おすすめ' },
     prereqs?.terminology?.length > 0 && { id: 'terminology', label: 'キーワード' },
     prereqs?.domainContext && { id: 'context', label: 'コンテクスト' },
     (prereqs?.recommendedResources?.length || prereqs?.ndlSearchQueries?.length) && { id: 'books', label: '関連書籍' },
@@ -190,14 +191,6 @@ export default async function GuidePage({
       </header>
 
       <SectionNav sections={sections} />
-
-      {/* 問題関心 */}
-      {prereqs?.problemFocus && (
-        <section id="focus" className="scroll-mt-28 space-y-5">
-          <SectionHeading title="問題関心" />
-          <BulletCard items={prereqs.problemFocus} />
-        </section>
-      )}
 
       {/* この本が答えようとしている問い */}
       {prereqs?.coreQuestions && prereqs.coreQuestions.length > 0 && (
@@ -279,6 +272,14 @@ export default async function GuidePage({
               </p>
             )}
           </div>
+        </section>
+      )}
+
+      {/* こんな人におすすめ */}
+      {prereqs?.recommendedFor && prereqs.recommendedFor.length > 0 && (
+        <section id="recommended-for" className="scroll-mt-28 space-y-5">
+          <SectionHeading title="こんな人におすすめ" />
+          <BulletCard items={prereqs.recommendedFor} />
         </section>
       )}
 
