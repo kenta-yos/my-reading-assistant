@@ -328,7 +328,13 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
     const modelConfig: Parameters<typeof genAI.getGenerativeModel>[0] = {
       model: 'gemini-2.5-flash',
       systemInstruction: systemPrompt,
-      generationConfig: { temperature: 0.2, responseMimeType: 'application/json' },
+      generationConfig: inputType === 'URL'
+        ? { temperature: 0.2, responseMimeType: 'application/json' }
+        : { temperature: 0.2 },
+    }
+    if (inputType !== 'URL') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      modelConfig.tools = [{ googleSearch: {} } as any]
     }
     const model = genAI.getGenerativeModel(modelConfig)
     const aiResponse = await model.generateContent(userPrompt)
