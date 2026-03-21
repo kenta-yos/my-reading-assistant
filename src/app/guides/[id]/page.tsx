@@ -39,7 +39,6 @@ export async function generateMetadata({
 }
 
 type Prerequisites = {
-  // 判断フェーズ
   problemFocus?: string | string[]
   coreQuestions?: string[]
   uniqueness?: string | string[]
@@ -55,7 +54,6 @@ type Prerequisites = {
   difficultyBarriers?: string[]
   difficultyExplanation?: string
   prerequisiteKnowledge?: string[]
-  // 準備フェーズ
   terminology: { term: string; definition: string }[]
   domainContext: {
     overview: string
@@ -78,7 +76,6 @@ type Prerequisites = {
   bookMetadata?: { authors?: string[]; publisher?: string; year?: string }
 }
 
-// 新5段階
 const numericDifficultyLabel: Record<number, { label: string; audience: string; className: string }> = {
   1: { label: '入門', audience: '予備知識なしで楽しめる', className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' },
   2: { label: '初級', audience: '興味さえあれば読み進められる', className: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300' },
@@ -87,7 +84,6 @@ const numericDifficultyLabel: Record<number, { label: string; audience: string; 
   5: { label: '専門', audience: '大学院・研究者・実務家向け', className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
 }
 
-// 旧3段階フォールバック
 const legacyDifficultyLabel: Record<string, { label: string; className: string }> = {
   beginner: { label: '入門', className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' },
   intermediate: { label: '中級', className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' },
@@ -126,262 +122,218 @@ export default async function GuidePage({
     (difficulty || prereqs?.difficultyBarriers?.length) && { id: 'difficulty', label: '難易度' },
     prereqs?.terminology?.length > 0 && { id: 'terminology', label: 'キーワード' },
     prereqs?.domainContext && { id: 'context', label: 'コンテクスト' },
-(prereqs?.recommendedResources?.length || prereqs?.ndlSearchQueries?.length) && { id: 'books', label: '関連書籍' },
+    (prereqs?.recommendedResources?.length || prereqs?.ndlSearchQueries?.length) && { id: 'books', label: '関連書籍' },
   ].filter(Boolean) as { id: string; label: string }[]
 
   return (
-    <div className="space-y-8 sm:space-y-10">
-      {/* Header card */}
-      <header className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
-        <div className="h-1 bg-indigo-600" />
-        <div className="p-6 sm:p-8">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex flex-wrap items-center gap-2 text-sm text-stone-500">
-              <span>{guide.inputType === 'URL' ? 'ウェブ記事' : '書籍'}</span>
-              <span>·</span>
-              <span>{date}</span>
-              {difficulty && (
-                <>
-                  <span>·</span>
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${difficulty.className}`}>
-                    {difficulty.label}
-                  </span>
-                </>
+    <div className="space-y-10 sm:space-y-12">
+      {/* Header */}
+      <header className="space-y-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-stone-500">
+            <span>{guide.inputType === 'URL' ? 'ウェブ記事' : '書籍'}</span>
+            <span>·</span>
+            <span>{date}</span>
+            {difficulty && (
+              <>
+                <span>·</span>
+                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${difficulty.className}`}>
+                  {difficulty.label}
+                </span>
+              </>
+            )}
+          </div>
+          <div className="flex flex-shrink-0 items-center gap-2">
+            <ShareButton title={guide.title} />
+            <DeleteButton id={guide.id} />
+          </div>
+        </div>
+
+        <h1 className="text-2xl font-bold text-stone-950 dark:text-stone-50 sm:text-3xl">
+          {guide.title}
+        </h1>
+
+        {prereqs?.bookMetadata && (
+          <div className="space-y-1">
+            {prereqs.bookMetadata.authors?.length ? (
+              <p className="text-sm text-stone-600 dark:text-stone-300">
+                {prereqs.bookMetadata.authors.join('、')}
+              </p>
+            ) : null}
+            <div className="flex flex-wrap gap-1.5">
+              {prereqs.bookMetadata.publisher && (
+                <span className="inline-block rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-600 dark:bg-stone-700 dark:text-stone-300">
+                  {prereqs.bookMetadata.publisher}
+                </span>
+              )}
+              {prereqs.bookMetadata.year && (
+                <span className="inline-block rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-600 dark:bg-stone-700 dark:text-stone-300">
+                  {prereqs.bookMetadata.year}年
+                </span>
               )}
             </div>
-            <div className="flex flex-shrink-0 items-center gap-2">
-              <ShareButton title={guide.title} />
-              <DeleteButton id={guide.id} />
-            </div>
           </div>
+        )}
+        {!prereqs?.bookMetadata && guide.inputValue !== guide.title && (
+          <p className="truncate text-sm text-stone-400">{guide.inputValue}</p>
+        )}
 
-          <h1 className="text-xl font-bold text-stone-950 dark:text-stone-50 sm:text-2xl">
-            {guide.title}
-          </h1>
-          {prereqs?.bookMetadata && (
-            <div className="mt-2 space-y-1">
-              {prereqs.bookMetadata.authors?.length ? (
-                <p className="text-sm text-stone-600 dark:text-stone-300">
-                  {prereqs.bookMetadata.authors.join('、')}
-                </p>
-              ) : null}
-              <div className="flex flex-wrap gap-1.5">
-                {prereqs.bookMetadata.publisher && (
-                  <span className="inline-block rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-600 dark:bg-stone-700 dark:text-stone-300">
-                    {prereqs.bookMetadata.publisher}
-                  </span>
-                )}
-                {prereqs.bookMetadata.year && (
-                  <span className="inline-block rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-600 dark:bg-stone-700 dark:text-stone-300">
-                    {prereqs.bookMetadata.year}年
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-          {!prereqs?.bookMetadata && guide.inputValue !== guide.title && (
-            <p className="mt-1 truncate text-sm text-stone-400">{guide.inputValue}</p>
-          )}
+        {guide.summary && (
+          <p className="text-[15px] leading-relaxed text-stone-700 dark:text-stone-300">{guide.summary}</p>
+        )}
 
-          {guide.summary && (
-            <div className="mt-6 border-t border-stone-100 pt-5 dark:border-stone-800">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-stone-400">
-                全体像
-              </p>
-              <p className="leading-relaxed text-stone-900 dark:text-stone-100">{guide.summary}</p>
-            </div>
-          )}
-
-          {prereqs?.aboutAuthor && (
-            <div className="mt-5 border-t border-stone-100 pt-5 dark:border-stone-800">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-stone-400">
-                著者について
-              </p>
-              <p className="text-sm leading-relaxed text-stone-700 dark:text-stone-300">{prereqs.aboutAuthor}</p>
-            </div>
-          )}
-        </div>
+        {prereqs?.aboutAuthor && (
+          <p className="text-sm leading-relaxed text-stone-500 dark:text-stone-400">{prereqs.aboutAuthor}</p>
+        )}
       </header>
 
       <SectionNav sections={sections} />
 
       {/* この本が扱う問い */}
       {(prereqs?.problemFocus || (prereqs?.coreQuestions && prereqs.coreQuestions.length > 0)) && (
-        <section id="questions" className="scroll-mt-24 space-y-4">
+        <section id="questions" className="scroll-mt-24 space-y-6">
           {prereqs.problemFocus && (
-            <JudgmentCard label="問題関心" items={prereqs.problemFocus} />
+            <BulletCard label="問題関心" items={prereqs.problemFocus} />
           )}
           {prereqs.coreQuestions && prereqs.coreQuestions.length > 0 && (
-            <JudgmentCard label="この本が答えようとしている問い" items={prereqs.coreQuestions} marker="?" />
+            <BulletCard label="この本が答えようとしている問い" items={prereqs.coreQuestions} marker="?" />
           )}
         </section>
       )}
 
       {/* 読む価値 */}
       {(prereqs?.uniqueness || prereqs?.postReadingOutcome) && (
-        <section id="value" className="scroll-mt-24 space-y-4">
+        <section id="value" className="scroll-mt-24 space-y-6">
           {prereqs.uniqueness && (
-            <JudgmentCard label="本書のオリジナリティ" items={prereqs.uniqueness} />
+            <BulletCard label="本書のオリジナリティ" items={prereqs.uniqueness} />
           )}
           {prereqs.postReadingOutcome && (
-            <JudgmentCard label="この本で得られる体験" items={prereqs.postReadingOutcome} />
+            <BulletCard label="この本で得られる体験" items={prereqs.postReadingOutcome} />
           )}
         </section>
       )}
 
       {/* 難易度 */}
       {(difficulty || prereqs?.difficultyBarriers?.length) && (
-        <section id="difficulty" className="scroll-mt-24">
-          <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
-            <div className="h-0.5 bg-amber-400" />
-            <div className="p-5 space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-widest text-amber-600 dark:text-amber-400">
-                難易度
-              </p>
-              {difficulty && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <span className={`rounded-full px-3 py-1 text-sm font-semibold ${difficulty.className}`}>
-                      {difficulty.label}
-                    </span>
-                    {typeof prereqs.difficultyLevel === 'number' && (
-                      <div className="flex gap-1">
-                        {[1, 2, 3, 4, 5].map((n) => (
-                          <div
-                            key={n}
-                            className={`h-2 w-5 rounded-full ${
-                              n <= Number(prereqs.difficultyLevel)
-                                ? 'bg-amber-400'
-                                : 'bg-stone-200 dark:bg-stone-700'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  {difficulty.audience && (
-                    <p className="text-sm text-stone-600 dark:text-stone-400">
-                      {difficulty.audience}
-                    </p>
+        <section id="difficulty" className="scroll-mt-24 space-y-4">
+          <SectionHeading title="難易度" />
+          <div className="space-y-4">
+            {difficulty && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <span className={`rounded-full px-3 py-1 text-sm font-semibold ${difficulty.className}`}>
+                    {difficulty.label}
+                  </span>
+                  {typeof prereqs.difficultyLevel === 'number' && (
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <div
+                          key={n}
+                          className={`h-2 w-5 rounded-full ${
+                            n <= Number(prereqs.difficultyLevel)
+                              ? 'bg-stone-400 dark:bg-stone-500'
+                              : 'bg-stone-200 dark:bg-stone-700'
+                          }`}
+                        />
+                      ))}
+                    </div>
                   )}
                 </div>
-              )}
+                {difficulty.audience && (
+                  <p className="text-sm text-stone-600 dark:text-stone-400">
+                    {difficulty.audience}
+                  </p>
+                )}
+              </div>
+            )}
 
-              {/* 旧5軸内訳（後方互換） */}
-              {prereqs?.difficultyDimensions && !prereqs?.difficultyBarriers && (
-                <DifficultyDimensions dimensions={prereqs.difficultyDimensions} />
-              )}
+            {/* 旧5軸内訳（後方互換） */}
+            {prereqs?.difficultyDimensions && !prereqs?.difficultyBarriers && (
+              <DifficultyDimensions dimensions={prereqs.difficultyDimensions} />
+            )}
 
-              {prereqs?.difficultyBarriers && prereqs.difficultyBarriers.length > 0 && (
-                <ul className="space-y-1.5">
-                  {prereqs.difficultyBarriers.map((item, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm leading-relaxed text-stone-700 dark:text-stone-300">
-                      <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-amber-400" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              )}
+            {prereqs?.difficultyBarriers && prereqs.difficultyBarriers.length > 0 && (
+              <ul className="space-y-2">
+                {prereqs.difficultyBarriers.map((item, i) => (
+                  <li key={i} className="flex items-start gap-2.5 text-sm leading-relaxed text-stone-700 dark:text-stone-300">
+                    <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-stone-400 dark:bg-stone-500" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            )}
 
-              {prereqs?.difficultyExplanation && (
-                <p className="text-sm leading-relaxed text-stone-700 dark:text-stone-300">
-                  {prereqs.difficultyExplanation}
-                </p>
-              )}
-            </div>
+            {prereqs?.difficultyExplanation && (
+              <p className="text-sm leading-relaxed text-stone-600 dark:text-stone-400">
+                {prereqs.difficultyExplanation}
+              </p>
+            )}
           </div>
         </section>
       )}
 
       {/* 関連キーワード */}
       {prereqs?.terminology?.length > 0 && (
-        <Section id="terminology" title="関連キーワード" accent="indigo">
+        <section id="terminology" className="scroll-mt-24 space-y-4">
+          <SectionHeading title="関連キーワード" />
           <div className="grid gap-3 sm:grid-cols-2">
             {prereqs.terminology.map((item, i) => (
               <div
                 key={i}
-                className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900"
+                className="rounded-xl border border-stone-200 bg-white p-4 dark:border-stone-700 dark:bg-stone-900"
               >
-                <div className="h-0.5 bg-indigo-400" />
-                <div className="p-4">
-                  <dt className="font-semibold text-stone-950 dark:text-stone-100">{item.term}</dt>
-                  <dd className="mt-1.5 text-sm leading-relaxed text-stone-900 dark:text-stone-100">
-                    {item.definition}
-                  </dd>
-                </div>
+                <dt className="font-semibold text-stone-950 dark:text-stone-100">{item.term}</dt>
+                <dd className="mt-1.5 text-sm leading-relaxed text-stone-600 dark:text-stone-400">
+                  {item.definition}
+                </dd>
               </div>
             ))}
           </div>
-        </Section>
+        </section>
       )}
 
-      {/* Section 02 — 領域のコンテクスト */}
+      {/* コンテクスト */}
       {prereqs?.domainContext && (
-        <Section id="context" title="この領域のコンテクスト" accent="teal">
-          <div className="space-y-3">
+        <section id="context" className="scroll-mt-24 space-y-4">
+          <SectionHeading title="この領域のコンテクスト" />
+          <div className="space-y-4">
             {prereqs.domainContext.overview && (
-              <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
-                <div className="h-0.5 bg-teal-400" />
-                <div className="p-5">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-stone-400">
-                    歴史的な流れ
-                  </p>
-                  <p className="leading-relaxed text-stone-900 dark:text-stone-100">
-                    {prereqs.domainContext.overview}
-                  </p>
-                </div>
-              </div>
+              <p className="text-[15px] leading-relaxed text-stone-700 dark:text-stone-300">
+                {prereqs.domainContext.overview}
+              </p>
             )}
 
             {prereqs.domainContext.keyEvents?.length > 0 && (
-              <div className="rounded-xl border border-stone-200 bg-white p-5 dark:border-stone-700 dark:bg-stone-900">
-                <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-stone-400">
-                  押さえておくべき出来事・転換点
-                </p>
-                <ul className="space-y-5">
-                  {prereqs.domainContext.keyEvents.map((item, i) => (
-                    <li
-                      key={i}
-                      className="flex gap-3 border-b border-stone-100 pb-5 last:border-0 last:pb-0 dark:border-stone-800"
-                    >
-                      <div className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-teal-400" />
-                      <div>
-                        <p className="font-semibold text-stone-900 dark:text-stone-100">{item.event}</p>
-                        {item.significance && (
-                          <p className="mt-1.5 text-sm leading-relaxed text-stone-900 dark:text-stone-100">
-                            {item.significance}
-                          </p>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              <ul className="space-y-4">
+                {prereqs.domainContext.keyEvents.map((item, i) => (
+                  <li
+                    key={i}
+                    className="border-b border-stone-100 pb-4 last:border-0 last:pb-0 dark:border-stone-800"
+                  >
+                    <p className="font-semibold text-stone-900 dark:text-stone-100">{item.event}</p>
+                    {item.significance && (
+                      <p className="mt-1.5 text-sm leading-relaxed text-stone-600 dark:text-stone-400">
+                        {item.significance}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
             )}
 
-            {/* 旧データ互換: problemAwareness */}
             {prereqs.domainContext.problemAwareness && (
-              <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
-                <div className="h-0.5 bg-teal-400" />
-                <div className="p-5">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-stone-400">
-                    この領域が取り組む問い・対立軸
-                  </p>
-                  <p className="leading-relaxed text-stone-900 dark:text-stone-100">
-                    {prereqs.domainContext.problemAwareness}
-                  </p>
-                </div>
-              </div>
+              <p className="text-[15px] leading-relaxed text-stone-700 dark:text-stone-300">
+                {prereqs.domainContext.problemAwareness}
+              </p>
             )}
           </div>
-        </Section>
+        </section>
       )}
 
-
-
-      {/* Section 05 — 関連書籍 */}
+      {/* 関連書籍 */}
       {(prereqs?.recommendedResources?.length || prereqs?.ndlSearchQueries?.length) && (
-        <Section id="books" title="関連書籍" accent="cyan">
+        <section id="books" className="scroll-mt-24 space-y-4">
+          <SectionHeading title="関連書籍" />
           {prereqs.recommendedResources && prereqs.recommendedResources.length > 0 ? (
             (() => {
               const introBooks = prereqs.recommendedResources!.filter(b => b.category === '入門')
@@ -390,7 +342,7 @@ export default async function GuidePage({
               const hasCategories = introBooks.length > 0 || advancedBooks.length > 0
 
               return (
-                <div className="space-y-5">
+                <div className="space-y-6">
                   {hasCategories ? (
                     <>
                       {introBooks.length > 0 && (
@@ -402,7 +354,7 @@ export default async function GuidePage({
                             <span className="text-xs text-stone-400">読む前に前提知識を補う</span>
                           </div>
                           {introBooks.map((book, i) => (
-                            <BookCard key={`intro-${i}`} book={book} accent="emerald" />
+                            <BookCard key={`intro-${i}`} book={book} />
                           ))}
                         </div>
                       )}
@@ -415,14 +367,14 @@ export default async function GuidePage({
                             <span className="text-xs text-stone-400">読んだ後にさらに深める</span>
                           </div>
                           {advancedBooks.map((book, i) => (
-                            <BookCard key={`adv-${i}`} book={book} accent="amber" />
+                            <BookCard key={`adv-${i}`} book={book} />
                           ))}
                         </div>
                       )}
                     </>
                   ) : (
                     uncategorized.map((book, i) => (
-                      <BookCard key={i} book={book} accent="cyan" />
+                      <BookCard key={i} book={book} />
                     ))
                   )}
                 </div>
@@ -431,23 +383,22 @@ export default async function GuidePage({
           ) : (
             <RecommendButton guideId={guide.id} />
           )}
-        </Section>
+        </section>
       )}
 
-      {/* Bottom CTA */}
-      <div className="border-t border-stone-100 pb-4 pt-8 text-center dark:border-stone-800">
+      {/* Bottom */}
+      <footer className="space-y-8 border-t border-stone-100 pt-8 text-center dark:border-stone-800">
         <Link
           href="/"
           className="inline-block rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
         >
           ＋ 新しいガイドを生成する
         </Link>
-        <p className="mt-4 text-xs text-stone-400 dark:text-stone-500">
+        <p className="text-xs text-stone-400 dark:text-stone-500">
           AIが生成したコンテンツです。誤った情報が含まれている可能性もありますので、あくまでも参考情報としてご利用ください。
         </p>
 
-        {/* 応援カード */}
-        <div className="mt-10 rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-6 text-center dark:border-indigo-900/30 dark:from-indigo-950/20 dark:to-stone-900">
+        <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-6 text-center dark:border-indigo-900/30 dark:from-indigo-950/20 dark:to-stone-900">
           <p className="text-sm leading-relaxed text-stone-600 dark:text-stone-400">
             サービスの運営にはAIのAPI利用料がかかっています。もしLukaが役に立ったら、応援していただけるととても嬉しいです。
           </p>
@@ -460,141 +411,95 @@ export default async function GuidePage({
             コーヒー1杯分の応援をする
           </a>
         </div>
-      </div>
+      </footer>
     </div>
   )
 }
 
-type AccentColor = 'indigo' | 'teal' | 'amber' | 'rose' | 'cyan' | 'emerald'
+/* ── Shared Components ── */
 
-const badgeStyle: Record<AccentColor, string> = {
-  indigo:  'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
-  teal:    'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300',
-  amber:   'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
-  rose:    'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300',
-  cyan:    'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300',
-  emerald: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
-}
-
-const accentTopBar: Record<AccentColor, string> = {
-  indigo:  'bg-indigo-400',
-  teal:    'bg-teal-400',
-  amber:   'bg-amber-400',
-  rose:    'bg-rose-400',
-  cyan:    'bg-cyan-400',
-  emerald: 'bg-emerald-400',
-}
-
-const accentLink: Record<AccentColor, string> = {
-  indigo:  'decoration-indigo-300 hover:decoration-indigo-500',
-  teal:    'decoration-teal-300 hover:decoration-teal-500',
-  amber:   'decoration-amber-300 hover:decoration-amber-500',
-  rose:    'decoration-rose-300 hover:decoration-rose-500',
-  cyan:    'decoration-cyan-300 hover:decoration-cyan-500',
-  emerald: 'decoration-emerald-300 hover:decoration-emerald-500',
-}
-
-function BookCard({ book, accent }: { book: Prerequisites['recommendedResources'] extends (infer T)[] | undefined ? T : never; accent: AccentColor }) {
+function SectionHeading({ title }: { title: string }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
-      <div className={`h-0.5 ${accentTopBar[accent]}`} />
-      <div className="p-5">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-3">
-          <p className="font-semibold text-stone-950 dark:text-stone-100">
-            {book.isbn ? (
-              <a
-                href={`https://www.hanmoto.com/bd/isbn/${book.isbn}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`underline underline-offset-2 ${accentLink[accent]}`}
-              >
-                {book.title}
-              </a>
-            ) : (
-              book.title
-            )}
-          </p>
-        </div>
-        <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">
-          {book.author}
-        </p>
-        <div className="mt-1.5 flex flex-wrap gap-1.5">
-          {book.publisher && (
-            <span className="inline-block rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-600 dark:bg-stone-700 dark:text-stone-300">
-              {book.publisher}
-            </span>
-          )}
-          {book.year && (
-            <span className="inline-block rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-600 dark:bg-stone-700 dark:text-stone-300">
-              {book.year}年
-            </span>
-          )}
-        </div>
-        {book.reason && (
-          <p className="mt-2 text-sm leading-relaxed text-stone-700 dark:text-stone-300">
-            {book.reason}
-          </p>
-        )}
-      </div>
+    <div className="flex items-center gap-2.5">
+      <div className="h-5 w-1 rounded-full bg-indigo-400 dark:bg-indigo-500" />
+      <h2 className="text-base font-bold text-stone-900 dark:text-stone-50 sm:text-lg">{title}</h2>
     </div>
   )
 }
 
-function Section({
-  id,
-  title,
-  accent,
-  children,
-}: {
-  id?: string
-  title: string
-  accent: AccentColor
-  children: React.ReactNode
-}) {
-  return (
-    <section id={id} className="scroll-mt-24 space-y-4">
-      <div className="flex items-center gap-2.5">
-        <div className={`h-4 w-1 rounded-full ${accentTopBar[accent]}`} />
-        <h2 className="text-base font-bold text-stone-900 dark:text-stone-50 sm:text-lg">{title}</h2>
-      </div>
-      {children}
-    </section>
-  )
-}
-
-const dimensionLabels: { key: string; label: string; description: string }[] = [
-  { key: 'vocabulary', label: '専門用語', description: '専門用語の難しさ' },
-  { key: 'concepts', label: '概念の抽象度', description: '理論・概念の抽象度' },
-  { key: 'formality', label: '数式・形式性', description: '数式・論理記号の多さ' },
-  { key: 'volume', label: '分量・密度', description: '分量と情報密度' },
-  { key: 'culturalContext', label: '文化的前提', description: '特定文化圏の知識の必要度' },
-]
-
-function JudgmentCard({ label, items, marker }: { label: string; items: string | string[]; marker?: string }) {
+function BulletCard({ label, items, marker }: { label: string; items: string | string[]; marker?: string }) {
   const list = Array.isArray(items) ? items : [items]
   return (
-    <div className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
-      <div className="h-0.5 bg-violet-400" />
-      <div className="p-5">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-violet-500 dark:text-violet-400">
-          {label}
-        </p>
-        <ul className="space-y-2">
-          {list.map((item, i) => (
-            <li key={i} className="flex items-start gap-2.5 leading-relaxed text-stone-900 dark:text-stone-100">
-              {marker ? (
-                <span className="mt-0.5 flex-shrink-0 text-violet-400 dark:text-violet-500">{marker}</span>
-              ) : (
-                <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-violet-400" />
-              )}
-              {item}
-            </li>
-          ))}
-        </ul>
-      </div>
+    <div className="space-y-3">
+      <p className="text-xs font-semibold uppercase tracking-widest text-stone-400 dark:text-stone-500">
+        {label}
+      </p>
+      <ul className="space-y-2">
+        {list.map((item, i) => (
+          <li key={i} className="flex items-start gap-2.5 text-[15px] leading-relaxed text-stone-800 dark:text-stone-200">
+            {marker ? (
+              <span className="mt-0.5 flex-shrink-0 font-medium text-indigo-400 dark:text-indigo-500">{marker}</span>
+            ) : (
+              <span className="mt-2.5 h-1 w-1 flex-shrink-0 rounded-full bg-stone-300 dark:bg-stone-600" />
+            )}
+            {item}
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }
+
+function BookCard({ book }: { book: NonNullable<Prerequisites['recommendedResources']>[number] }) {
+  return (
+    <div className="rounded-xl border border-stone-200 bg-white p-5 dark:border-stone-700 dark:bg-stone-900">
+      <p className="font-semibold text-stone-950 dark:text-stone-100">
+        {book.isbn ? (
+          <a
+            href={`https://www.hanmoto.com/bd/isbn/${book.isbn}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline decoration-stone-300 underline-offset-2 hover:decoration-indigo-400 dark:decoration-stone-600"
+          >
+            {book.title}
+          </a>
+        ) : (
+          book.title
+        )}
+      </p>
+      <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">
+        {book.author}
+      </p>
+      <div className="mt-1.5 flex flex-wrap gap-1.5">
+        {book.publisher && (
+          <span className="inline-block rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-600 dark:bg-stone-700 dark:text-stone-300">
+            {book.publisher}
+          </span>
+        )}
+        {book.year && (
+          <span className="inline-block rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-600 dark:bg-stone-700 dark:text-stone-300">
+            {book.year}年
+          </span>
+        )}
+      </div>
+      {book.reason && (
+        <p className="mt-2 text-sm leading-relaxed text-stone-600 dark:text-stone-400">
+          {book.reason}
+        </p>
+      )}
+    </div>
+  )
+}
+
+/* ── Legacy compat ── */
+
+const dimensionLabels: { key: string; label: string }[] = [
+  { key: 'vocabulary', label: '専門用語' },
+  { key: 'concepts', label: '概念の抽象度' },
+  { key: 'formality', label: '数式・形式性' },
+  { key: 'volume', label: '分量・密度' },
+  { key: 'culturalContext', label: '文化的前提' },
+]
 
 function DifficultyDimensions({ dimensions }: { dimensions: NonNullable<Prerequisites['difficultyDimensions']> }) {
   return (
@@ -610,7 +515,7 @@ function DifficultyDimensions({ dimensions }: { dimensions: NonNullable<Prerequi
                   key={n}
                   className={`h-1.5 flex-1 rounded-full ${
                     n <= value
-                      ? 'bg-violet-400'
+                      ? 'bg-stone-400 dark:bg-stone-500'
                       : 'bg-stone-200 dark:bg-stone-700'
                   }`}
                 />
