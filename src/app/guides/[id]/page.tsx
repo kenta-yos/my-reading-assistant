@@ -424,7 +424,7 @@ export default async function GuidePage({
           AIが生成したコンテンツです。誤った情報が含まれている可能性もありますので、あくまでも参考情報としてご利用ください。
         </p>
 
-        <div className="rounded-2xl bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-6 shadow-sm ring-1 ring-indigo-100/80 dark:from-indigo-950/30 dark:via-stone-900 dark:to-violet-950/20 dark:ring-indigo-800/30 sm:p-8">
+        <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-6 dark:border-indigo-900/30 dark:from-indigo-950/20 dark:to-stone-900 sm:p-8">
           <div className="flex items-center gap-4">
             <Image
               src="/ken_blue.png"
@@ -433,7 +433,7 @@ export default async function GuidePage({
               height={48}
               className="flex-shrink-0 rounded-full"
             />
-            <div className="text-left">
+            <div>
               <p className="font-bold text-stone-900 dark:text-stone-50">Kenta</p>
               <p className="text-xs text-stone-500 dark:text-stone-400">学術と日常をつなぐ</p>
               <a
@@ -449,16 +449,14 @@ export default async function GuidePage({
           <p className="mt-4 text-sm leading-relaxed text-stone-600 dark:text-stone-400">
             サービスの運営にはAIのAPI利用料がかかっています。もしLukaが役に立ったら、応援していただけるととても嬉しいです。
           </p>
-          <div className="mt-4">
-            <a
-              href="https://ofuse.me/bdd35efd"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-indigo-500/20 transition hover:from-indigo-700 hover:to-indigo-600 hover:shadow-lg hover:shadow-indigo-500/30 dark:from-indigo-500 dark:to-indigo-400"
-            >
-              コーヒー1杯分の応援をする
-            </a>
-          </div>
+          <a
+            href="https://ofuse.me/bdd35efd"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-block rounded-full bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+          >
+            コーヒー1杯分の応援をする
+          </a>
         </div>
       </footer>
     </div>
