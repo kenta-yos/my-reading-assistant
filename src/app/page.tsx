@@ -127,32 +127,29 @@ export default async function Home() {
           </div>
         </section>
       )}
-      {/* 開発者 */}
-      <a
-        href="https://linktr.ee/ken_book_lover"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center justify-center gap-3 rounded-2xl bg-white/80 px-6 py-5 shadow-sm ring-1 ring-stone-950/5 backdrop-blur-sm transition hover:shadow-md dark:bg-stone-900/80 dark:ring-white/5"
-      >
-        <Image
-          src="/ken_blue.png"
-          alt="Kenta"
-          width={44}
-          height={44}
-          className="flex-shrink-0 rounded-full"
-        />
-        <div>
-          <p className="font-bold text-stone-900 dark:text-stone-50">Kenta</p>
-          <p className="text-xs text-stone-500 dark:text-stone-400">学術と日常をつなぐ</p>
-        </div>
-      </a>
-
       {/* 応援カード */}
-      <section className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-6 text-center dark:border-indigo-900/30 dark:from-indigo-950/20 dark:to-stone-900 sm:p-8">
-        <p className="text-base font-semibold text-stone-800 dark:text-stone-200">
-          Lukaを気に入っていただけましたか？
-        </p>
-        <p className="mt-2 text-sm leading-relaxed text-stone-600 dark:text-stone-400">
+      <section className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-6 dark:border-indigo-900/30 dark:from-indigo-950/20 dark:to-stone-900 sm:p-8">
+        <div className="flex items-center gap-4">
+          <Image
+            src="/ken_blue.png"
+            alt="Kenta"
+            width={48}
+            height={48}
+            className="flex-shrink-0 rounded-full"
+          />
+          <div>
+            <a
+              href="https://linktr.ee/ken_book_lover"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold text-stone-900 transition hover:text-indigo-600 dark:text-stone-50 dark:hover:text-indigo-400"
+            >
+              Kenta
+            </a>
+            <p className="text-xs text-stone-500 dark:text-stone-400">学術と日常をつなぐ</p>
+          </div>
+        </div>
+        <p className="mt-4 text-sm leading-relaxed text-stone-600 dark:text-stone-400">
           サービスの運営にはAIのAPI利用料がかかっています。もしLukaが役に立ったら、応援していただけるととても嬉しいです。
         </p>
         <a
