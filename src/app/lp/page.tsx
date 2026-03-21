@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function LandingPage() {
   return (
-    <div className="-mx-4 -mt-8 sm:-mt-12">
+    <div>
       {/* ── Hero ── */}
       <section className="relative overflow-hidden bg-gradient-to-b from-indigo-950 via-indigo-900 to-stone-950 px-6 py-24 text-center sm:py-32">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.15),transparent_70%)]" />
