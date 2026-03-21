@@ -74,17 +74,16 @@ export default function LandingPage() {
           </p>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             {[
-              { icon: '📖', title: 'この本は何を語っているのか', desc: '全体像と著者の問いを整理。読む前に「地図」を手に入れる。' },
-              { icon: '🧐', title: '自分に読めるかどうか', desc: '難易度とつまずきポイントを具体的に。不安を安心に変える。' },
-              { icon: '🔑', title: '知っておくべきキーワード', desc: '専門用語や背景知識を事前に把握。読み始めてから戸惑わない。' },
-              { icon: '💡', title: 'この本ならではの価値', desc: '他の本との違いと、読後に得られる視点を明確に。' },
+              { title: 'この本は何を語っているのか', desc: '全体像と著者の問いを整理。読む前に「地図」を手に入れる。' },
+              { title: '自分に読めるかどうか', desc: '難易度とつまずきポイントを具体的に。不安を安心に変える。' },
+              { title: '知っておくべきキーワード', desc: '専門用語や背景知識を事前に把握。読み始めてから戸惑わない。' },
+              { title: 'この本ならではの価値', desc: '他の本との違いと、読後に得られる視点を明確に。' },
             ].map((item, i) => (
               <div
                 key={i}
                 className="rounded-xl bg-white/80 p-5 shadow-sm ring-1 ring-stone-950/5 dark:bg-stone-900/80 dark:ring-white/5"
               >
-                <span className="text-xl">{item.icon}</span>
-                <h3 className="mt-2 text-sm font-bold text-stone-900 dark:text-stone-50">{item.title}</h3>
+                <h3 className="text-sm font-bold text-stone-900 dark:text-stone-50">{item.title}</h3>
                 <p className="mt-1 text-xs leading-relaxed text-stone-600 dark:text-stone-400">{item.desc}</p>
               </div>
             ))}
