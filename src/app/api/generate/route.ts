@@ -13,7 +13,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 const GLOBAL_DAILY_LIMIT = 200
 // ユーザー別上限
 const USER_DAILY_LIMIT = 5
-const ANON_DAILY_LIMIT = 2
+const ANON_DAILY_LIMIT = 1
 // 管理者メール（上限なし）
 const ADMIN_EMAILS = ['key21.ring.a.bell@gmail.com']
 

@@ -165,7 +165,7 @@ export default function LandingPage() {
             無料で使ってみる
           </Link>
           <p className="mt-3 text-xs text-indigo-300/60">
-            ログインなしでも2回まで無料でお試しいただけます
+            ログインなしでも1回無料でお試しいただけます
           </p>
         </div>
       </section>
