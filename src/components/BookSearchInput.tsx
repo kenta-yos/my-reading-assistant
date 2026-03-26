@@ -20,7 +20,10 @@ type Props = {
 }
 
 export default function BookSearchInput({ onSelect, onClear, selected }: Props) {
-  const [query, setQuery] = useState('')
+  const [title, setTitle] = useState('')
+  const [author, setAuthor] = useState('')
+  const [publisher, setPublisher] = useState('')
+  const [showFilters, setShowFilters] = useState(false)
   const [results, setResults] = useState<Candidate[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
@@ -51,7 +54,7 @@ export default function BookSearchInput({ onSelect, onClear, selected }: Props) 
 
   // デバウンス検索
   useEffect(() => {
-    if (query.length < 2) {
+    if (title.length < 2 && author.length < 2 && publisher.length < 2) {
       setResults([])
       setIsOpen(false)
       return
@@ -63,8 +66,12 @@ export default function BookSearchInput({ onSelect, onClear, selected }: Props) 
 
       setIsSearching(true)
       try {
+        const params = new URLSearchParams()
+        if (title) params.set('title', title)
+        if (author) params.set('author', author)
+        if (publisher) params.set('publisher', publisher)
         const res = await fetch(
-          `/api/books/search?q=${encodeURIComponent(query)}`,
+          `/api/books/search?${params.toString()}`,
           { signal: controller.signal },
         )
         const data: { candidates: Candidate[] } = await res.json()
@@ -78,11 +85,14 @@ export default function BookSearchInput({ onSelect, onClear, selected }: Props) 
       }
     }, 350)
     return () => clearTimeout(timer)
-  }, [query])
+  }, [title, author, publisher])
 
   const handleSelect = (candidate: Candidate) => {
     onSelect(toSelectedBook(candidate))
-    setQuery('')
+    setTitle('')
+    setAuthor('')
+    setPublisher('')
+    setShowFilters(false)
     setIsOpen(false)
     setResults([])
   }
@@ -100,10 +110,10 @@ export default function BookSearchInput({ onSelect, onClear, selected }: Props) 
         if (data.candidates.length > 0) {
           onSelect(toSelectedBook(data.candidates[0]))
         } else {
-          setQuery(isbn)
+          setTitle(isbn)
         }
       } catch {
-        setQuery(isbn)
+        setTitle(isbn)
       } finally {
         setIsSearching(false)
       }
@@ -151,14 +161,17 @@ export default function BookSearchInput({ onSelect, onClear, selected }: Props) 
     )
   }
 
+  const hasQuery = title.length >= 2 || author.length >= 2 || publisher.length >= 2
+
   return (
     <>
       <div ref={wrapperRef} className="relative">
+        {/* 書名（メイン入力） */}
         <div className="relative">
           <input
             type="text"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
+            value={title}
+            onChange={e => setTitle(e.target.value)}
             onFocus={() => results.length > 0 && setIsOpen(true)}
             placeholder="書名を入力（例：サピエンス全史）"
             className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 pr-20 text-base text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
@@ -191,6 +204,62 @@ export default function BookSearchInput({ onSelect, onClear, selected }: Props) 
             </div>
           </div>
         </div>
+
+        {/* 絞り込み条件トグル */}
+        {!showFilters && (
+          <button
+            type="button"
+            onClick={() => setShowFilters(true)}
+            className="mt-1.5 flex items-center gap-1 text-xs text-slate-400 hover:text-indigo-500 transition-colors"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            絞り込み条件を追加
+          </button>
+        )}
+
+        {/* 著者・出版社フィールド */}
+        {showFilters && (
+          <div className="mt-2 space-y-2">
+            <div className="flex items-center gap-2">
+              <label className="w-16 flex-shrink-0 text-xs font-medium text-slate-500 dark:text-slate-400">著者</label>
+              <input
+                type="text"
+                value={author}
+                onChange={e => setAuthor(e.target.value)}
+                onFocus={() => results.length > 0 && setIsOpen(true)}
+                placeholder="著者名"
+                className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 transition focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="w-16 flex-shrink-0 text-xs font-medium text-slate-500 dark:text-slate-400">出版社</label>
+              <input
+                type="text"
+                value={publisher}
+                onChange={e => setPublisher(e.target.value)}
+                onFocus={() => results.length > 0 && setIsOpen(true)}
+                placeholder="出版社名"
+                className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 transition focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setAuthor('')
+                setPublisher('')
+                setShowFilters(false)
+              }}
+              className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              絞り込みを閉じる
+            </button>
+          </div>
+        )}
 
         {/* ドロップダウン */}
         {isOpen && results.length > 0 && (
@@ -233,10 +302,10 @@ export default function BookSearchInput({ onSelect, onClear, selected }: Props) 
           </ul>
         )}
 
-        {/* 2文字以上で結果なし */}
-        {isOpen && !isSearching && results.length === 0 && query.length >= 2 && (
+        {/* 検索結果なし */}
+        {isOpen && !isSearching && results.length === 0 && hasQuery && (
           <div className="absolute z-50 mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500 shadow-lg dark:border-slate-700 dark:bg-slate-800">
-            「{query}」に一致する本が見つかりませんでした
+            一致する本が見つかりませんでした
           </div>
         )}
       </div>

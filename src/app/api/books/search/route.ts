@@ -49,9 +49,8 @@ function extractGoogleIsbn(
 
 // --- NDL SRU 検索 ---
 
-async function searchNdl(query: string, isIsbn: boolean): Promise<Candidate[]> {
+async function searchNdl(cql: string): Promise<Candidate[]> {
   try {
-    const cql = isIsbn ? `isbn="${query}"` : `anywhere="${query}"`
     const url =
       `https://ndlsearch.ndl.go.jp/api/sru` +
       `?operation=searchRetrieve` +
@@ -149,27 +148,49 @@ function isJapaneseVolume(vol: GoogleBooksVolume['volumeInfo']): boolean {
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
-  const q = searchParams.get('q')
 
-  if (!q || q.trim().length < 2) {
-    return NextResponse.json({ candidates: [] })
-  }
+  // フィールド別検索パラメータ
+  const title = searchParams.get('title')?.replace(/[\u3000\u00A0]/g, ' ').replace(/\s+/g, ' ').trim() ?? ''
+  const author = searchParams.get('author')?.replace(/[\u3000\u00A0]/g, ' ').replace(/\s+/g, ' ').trim() ?? ''
+  const publisher = searchParams.get('publisher')?.replace(/[\u3000\u00A0]/g, ' ').replace(/\s+/g, ' ').trim() ?? ''
 
-  // ISBN検索の場合、Google Booksで見つからなければOpenBDでタイトルを取得して再検索
-  let searchQuery = q
+  // ISBN検索（バーコード用）
+  const q = searchParams.get('q')?.trim() ?? ''
   const isbnMatch = q.match(/^isbn[:\s]*(\d{10,13})$/i)
   const isIsbn = !!isbnMatch
 
-  // NDL検索を先に発火（並行実行）
-  const ndlPromise = searchNdl(
-    isIsbn ? isbnMatch![1] : q.replace(/[\u3000\u00A0]/g, ' ').replace(/\s+/g, ' ').trim(),
-    isIsbn,
-  )
+  // 最低限の入力チェック
+  if (!isIsbn && title.length < 2 && author.length < 2 && publisher.length < 2) {
+    return NextResponse.json({ candidates: [] })
+  }
 
+  // --- Google Books クエリ構築 ---
+  const googleQueryParts: string[] = []
   if (isIsbn) {
-    const isbn = isbnMatch![1]
+    googleQueryParts.push(`isbn:${isbnMatch![1]}`)
+  } else {
+    if (title) googleQueryParts.push(`intitle:${title}`)
+    if (author) googleQueryParts.push(`inauthor:${author}`)
+    if (publisher) googleQueryParts.push(`inpublisher:${publisher}`)
+  }
+
+  // --- NDL CQL クエリ構築 ---
+  const ndlCqlParts: string[] = []
+  if (isIsbn) {
+    ndlCqlParts.push(`isbn="${isbnMatch![1]}"`)
+  } else {
+    if (title) ndlCqlParts.push(`title="${title}"`)
+    if (author) ndlCqlParts.push(`creator="${author}"`)
+    if (publisher) ndlCqlParts.push(`publisher="${publisher}"`)
+  }
+
+  // NDL検索を先に発火（並行実行）
+  const ndlPromise = searchNdl(ndlCqlParts.join(' AND '))
+
+  // ISBN検索で Google Books ヒットなしの場合、OpenBD でタイトルを取得して再検索
+  if (isIsbn) {
     const isbnUrl = new URL('https://www.googleapis.com/books/v1/volumes')
-    isbnUrl.searchParams.set('q', `isbn:${isbn}`)
+    isbnUrl.searchParams.set('q', googleQueryParts.join('+'))
     isbnUrl.searchParams.set('maxResults', '5')
     isbnUrl.searchParams.set('printType', 'books')
     if (process.env.GOOGLE_BOOKS_API_KEY) {
@@ -180,12 +201,13 @@ export async function GET(req: Request) {
 
     if (!isbnData.items || isbnData.items.length === 0) {
       try {
-        const obdRes = await fetch(`https://api.openbd.jp/v1/get?isbn=${isbn}`)
+        const obdRes = await fetch(`https://api.openbd.jp/v1/get?isbn=${isbnMatch![1]}`)
         if (obdRes.ok) {
           const obdData = await obdRes.json()
-          const title = obdData?.[0]?.summary?.title
-          if (title) {
-            searchQuery = title
+          const obdTitle = obdData?.[0]?.summary?.title
+          if (obdTitle) {
+            googleQueryParts.length = 0
+            googleQueryParts.push(`intitle:${obdTitle}`)
           }
         }
       } catch {
@@ -194,12 +216,9 @@ export async function GET(req: Request) {
     }
   }
 
-  // 全角スペース・連続スペースを正規化
-  searchQuery = searchQuery.replace(/[\u3000\u00A0]/g, ' ').replace(/\s+/g, ' ').trim()
-
   // Google Books API
   const googleUrl = new URL('https://www.googleapis.com/books/v1/volumes')
-  googleUrl.searchParams.set('q', searchQuery)
+  googleUrl.searchParams.set('q', googleQueryParts.join('+'))
   googleUrl.searchParams.set('maxResults', '20')
   googleUrl.searchParams.set('printType', 'books')
   if (process.env.GOOGLE_BOOKS_API_KEY) {
