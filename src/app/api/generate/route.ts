@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { cookies } from 'next/headers'
+import { randomUUID } from 'crypto'
 import { prisma } from '@/lib/prisma'
 import { cleanupExpiredGuides } from '@/lib/cleanup'
 import { auth } from '@/lib/auth'
@@ -13,7 +15,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 const GLOBAL_DAILY_LIMIT = 200
 // ユーザー別上限
 const USER_DAILY_LIMIT = 5
-const ANON_DAILY_LIMIT = 1
+const ANON_LIMIT = 2  // 未ログインは通算2回まで
 // 管理者メール（上限なし）
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? '').split(',').filter(Boolean)
 
@@ -197,15 +199,20 @@ export async function POST(request: NextRequest) {
       )
     }
   } else if (!userId) {
-    // 未ログインはIPベースでなくcookie/セッションなしのため、全体のanon枠で制限
-    // 簡易的に全体のanon使用量で管理
+    // 未ログインはCookieでユーザーを識別し、通算回数で制限
+    const cookieStore = await cookies()
+    let anonId = cookieStore.get('anon_id')?.value
+    if (!anonId) {
+      anonId = randomUUID()
+    }
+    const anonKey = `anon:${anonId}`
     const anonUsage = await prisma.userUsage.findUnique({
-      where: { userId_date: { userId: 'anonymous', date: today } },
+      where: { userId_date: { userId: anonKey, date: 'lifetime' } },
     })
-    if ((anonUsage?.count ?? 0) >= ANON_DAILY_LIMIT) {
+    if ((anonUsage?.count ?? 0) >= ANON_LIMIT) {
       return NextResponse.json(
         {
-          error: 'ログインなしでの利用上限に達しました。Googleアカウントでログインしてください。',
+          error: `ログインなしでの利用上限（${ANON_LIMIT}回）に達しました。Googleアカウントでログインしてください。`,
           requireLogin: true,
         },
         { status: 429 }
@@ -414,11 +421,25 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
     create: { date: today, count: 1 },
     update: { count: { increment: 1 } },
   })
-  await prisma.userUsage.upsert({
-    where: { userId_date: { userId: userId ?? 'anonymous', date: today } },
-    create: { userId: userId ?? 'anonymous', date: today, count: 1 },
-    update: { count: { increment: 1 } },
-  })
+
+  // 匿名ユーザーはCookie IDで通算カウント、ログインユーザーは日次カウント
+  let anonId: string | undefined
+  if (userId) {
+    await prisma.userUsage.upsert({
+      where: { userId_date: { userId, date: today } },
+      create: { userId, date: today, count: 1 },
+      update: { count: { increment: 1 } },
+    })
+  } else {
+    const cookieStore = await cookies()
+    anonId = cookieStore.get('anon_id')?.value ?? randomUUID()
+    const anonKey = `anon:${anonId}`
+    await prisma.userUsage.upsert({
+      where: { userId_date: { userId: anonKey, date: 'lifetime' } },
+      create: { userId: anonKey, date: 'lifetime', count: 1 },
+      update: { count: { increment: 1 } },
+    })
+  }
 
   // 期限切れガイドを非同期でクリーンアップ（失敗しても無視）
   cleanupExpiredGuides().catch(() => {})
@@ -450,5 +471,18 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
     },
   })
 
-  return NextResponse.json(guide)
+  const res = NextResponse.json(guide)
+
+  // 匿名ユーザーにCookieを設定（1年間有効）
+  if (anonId) {
+    res.cookies.set('anon_id', anonId, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      maxAge: 365 * 24 * 60 * 60,
+      path: '/',
+    })
+  }
+
+  return res
 }
