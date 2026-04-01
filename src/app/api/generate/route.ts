@@ -15,7 +15,7 @@ const GLOBAL_DAILY_LIMIT = 200
 const USER_DAILY_LIMIT = 5
 const ANON_DAILY_LIMIT = 1
 // 管理者メール（上限なし）
-const ADMIN_EMAILS = ['key21.ring.a.bell@gmail.com']
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? '').split(',').filter(Boolean)
 
 // JST（UTC+9）の今日の日付を返す
 function getTodayJST(): string {
@@ -218,9 +218,24 @@ export async function POST(request: NextRequest) {
 
   if (inputType === 'URL') {
     try {
-      const response = await fetch(inputValue, {
+      const url = new URL(inputValue)
+
+      // SSRF対策: プライベートIP・localhostをブロック
+      const blockedHosts = ['localhost', '127.0.0.1', '0.0.0.0', '[::1]', '169.254.169.254']
+      if (
+        blockedHosts.includes(url.hostname) ||
+        url.hostname.startsWith('10.') ||
+        url.hostname.startsWith('192.168.') ||
+        /^172\.(1[6-9]|2\d|3[01])\./.test(url.hostname) ||
+        url.protocol === 'file:'
+      ) {
+        return NextResponse.json({ error: '無効なURLです' }, { status: 400 })
+      }
+
+      const response = await fetch(url.toString(), {
         headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ReadingGuideBot/1.0)' },
         signal: AbortSignal.timeout(10000),
+        redirect: 'manual',
       })
       const html = await response.text()
       contentContext = extractTextFromHtml(html)
@@ -367,8 +382,8 @@ ${contentContext ? `\nページの内容（抜粋）:\n${contentContext}` : ''}`
         { status: 429 }
       )
     }
-    const message = error instanceof Error ? error.message : '不明なエラー'
-    return NextResponse.json({ error: `AI生成エラー: ${message}` }, { status: 500 })
+    console.error('[generate] AI error:', error)
+    return NextResponse.json({ error: 'AI生成中にエラーが発生しました。しばらく待ってから再度お試しください。' }, { status: 500 })
   }
   // ──────────────────────────────────────────────────────
 

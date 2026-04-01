@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { headers } from 'next/headers'
 import {
   htmlDecode,
   extractAll,
@@ -6,6 +7,30 @@ import {
   extractPublisher,
   cleanAuthorName,
 } from '@/lib/ndl'
+
+// 簡易インメモリレート制限（IP単位、1分あたり20リクエスト）
+const RATE_WINDOW_MS = 60_000
+const RATE_LIMIT = 20
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now()
+  const entry = rateLimitMap.get(ip)
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS })
+    return true
+  }
+  entry.count++
+  return entry.count <= RATE_LIMIT
+}
+
+// 古いエントリを定期的に掃除
+setInterval(() => {
+  const now = Date.now()
+  for (const [key, val] of rateLimitMap) {
+    if (now > val.resetAt) rateLimitMap.delete(key)
+  }
+}, RATE_WINDOW_MS)
 
 export type Candidate = {
   title: string
@@ -147,6 +172,15 @@ function isJapaneseVolume(vol: GoogleBooksVolume['volumeInfo']): boolean {
 // --- メインハンドラ ---
 
 export async function GET(req: Request) {
+  const headersList = await headers()
+  const ip = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  if (!checkRateLimit(ip)) {
+    return NextResponse.json(
+      { error: 'リクエストが多すぎます。しばらく待ってから再度お試しください。' },
+      { status: 429 }
+    )
+  }
+
   const { searchParams } = new URL(req.url)
 
   // フィールド別検索パラメータ

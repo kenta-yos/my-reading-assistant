@@ -10,6 +10,8 @@ import ShareButton from '@/components/ShareButton'
 import BookmarkButton from '@/components/BookmarkButton'
 import { auth } from '@/lib/auth'
 
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? '').split(',').filter(Boolean)
+
 export async function generateMetadata({
   params,
 }: {
@@ -161,7 +163,9 @@ export default async function GuidePage({
           <div className="flex flex-shrink-0 items-center gap-1">
             <BookmarkButton guideId={guide.id} initialBookmarked={isBookmarked} />
             <ShareButton title={guide.title} />
-            <DeleteButton id={guide.id} />
+            {(guide.userId === session?.user?.id || ADMIN_EMAILS.includes(session?.user?.email ?? '')) && (
+              <DeleteButton id={guide.id} />
+            )}
           </div>
         </div>
 
